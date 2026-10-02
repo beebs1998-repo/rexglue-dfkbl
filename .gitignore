@@ -1,0 +1,30 @@
+# Build output
+/out/
+
+# Runtime data
+/game_data/
+/user_data/
+/logs/
+
+# Generated code (regenerated via: cmake --build . --target dfkbl_codegen)
+/generated/default/
+
+# Binaries
+*.exe
+*.dll
+*.backup*
+
+# Session / misc
+session-*.md
+stderr.txt
+stdout.txt
+codegen_out.txt
+ep.txt
+session-id.txt
+
+# rexglue-sdk dependency (add as a submodule or set REXSDK_DIR)
+/rexglue-sdk/
+
+# Editor
+.vscode/
+.idea/

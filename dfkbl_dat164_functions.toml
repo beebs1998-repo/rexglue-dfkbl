@@ -1,0 +1,8 @@
+# Dynamic entrypoints for the dfkbl game-mode module dat164.bin
+
+# Unresolved call targets discovered during dat164 analysis
+[functions."0x88227180"]
+name = "sub_88227180"
+
+[functions."0x882272E4"]
+name = "sub_882272E4"

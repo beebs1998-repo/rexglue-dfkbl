@@ -1,0 +1,64 @@
+# Dynamic entrypoints for the dfkbl entrypoint XEX (from ep.txt).
+
+[functions."0x820968D0"]
+name = "sub_820968D0"
+
+[functions."0x820961B8"]
+name = "sub_820961B8"
+
+[functions."0x820B38E8"]
+name = "sub_820B38E8"
+
+[functions."0x820A6448"]
+name = "sub_820A6448"
+
+[functions."0x82094FD8"]
+name = "sub_82094FD8"
+
+[functions."0x82094FD0"]
+name = "sub_82094FD0"
+
+[functions."0x82094FE8"]
+name = "sub_82094FE8"
+
+[functions."0x820B3298"]
+name = "sub_820B3298"
+
+[functions."0x820961C8"]
+name = "sub_820961C8"
+
+# Runtime unresolved call on GPU thread during module launch
+[functions."0x822A4B60"]
+name = "sub_822A4B60"
+
+# Runtime unresolved call during game startup
+[functions."0x82123410"]
+name = "sub_82123410"
+
+# Runtime unresolved call after game-mode module dat15.bin loads
+[functions."0x8209BB20"]
+name = "sub_8209BB20"
+
+# Runtime unresolved call after game-mode module dat15.bin loads (2)
+[functions."0x82093E18"]
+name = "sub_82093E18"
+
+# Runtime unresolved call after game-mode module dat15.bin loads (3)
+[functions."0x8209BB30"]
+name = "sub_8209BB30"
+
+# Runtime unresolved call after game-mode module dat15.bin loads (4)
+[functions."0x82091A30"]
+name = "sub_82091A30"
+
+# Runtime unresolved call after game-mode module dat15.bin loads (5)
+[functions."0x82091A78"]
+name = "sub_82091A78"
+
+# Runtime unresolved call after game-mode module dat15.bin loads (6)
+[functions."0x82091B48"]
+name = "sub_82091B48"
+
+# Runtime unresolved call when choosing Exit from game-over (returns to title)
+[functions."0x82121398"]
+name = "sub_82121398"
