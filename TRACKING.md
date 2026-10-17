@@ -106,3 +106,233 @@ Runtime/iteration log for unresolved addresses, missing symbols, and runtime exc
 - **Status**: GPU resolve errors are now softly rate-limited instead of flooding.
   Main rendering path unaffected (screen shows real game content). "Renders
   without critical errors" success criterion met (0 errors in log).
+
+## Iteration 14 (2026-08-25)
+
+- **SDK upgraded to v0.10.0** (from v0.9.0.1): built from source, fixed missing
+  `-mssse3` compile flag, re-ran per-module codegen (`--target dat15/dat164/dat165`
+  since modules share base 0x88000000), disabled auto-codegen custom command,
+  merged all 3 modules into dll_targets.cmake/module_registry.cpp.
+- Registered `sub_88031B30` (dat15) - resolved remaining unregistered-call crash.
+- Added cvar `d3d12_present_vsync` (UI/D3D12, default false) - Present() sync
+  interval control. NOTE: setting true caused black screen on this setup;
+  keep false.
+- **Slowdown mechanic investigation**: game paces sim updates off VBlanks;
+  heavy-scene slowdown = skip every other VBlank (fixed 2:1 ratio vs refresh
+  rate). Static config cannot satisfy both correct normal speed AND desired
+  slowdown depth.
+- **Implemented adaptive VBlank pacing** (SDK, backend-agnostic):
+  - `GraphicsSystem::NotifySwapSubmitted()` called from XE_SWAP packet handler.
+  - VSync worker tracks gap = vblanks since last swap. Gap >=3 while actively
+    rendering for 4 consecutive ticks -> halve VBlank interval (boost).
+    Gap <=1 for 8 consecutive ticks -> restore normal interval.
+  - New cvar `slowdown_pacing_boost` (GPU, default true) to disable.
+  - Effect: normal pace stays 60 fps; slowdown motion boosted from ~30 fps
+    equivalent toward ~45-60 fps depending on game skip pattern.
+- **Status**: VERIFIED WORKING by user (slowdown improved vs baseline), but
+  still feels slower than intended at default 2.0x boost.
+  Known trade-offs: VBlank-count-driven effects (bg scroll/raster sync) may
+  animate faster while boost is engaged; brief single-frame hiccup possible
+  on engage/disengage transitions.
+
+## Iteration 15 (2026-08-25)
+
+- Added `slowdown_pacing_boost_multiplier` cvar (GPU, double, default 2.0,
+  range 1.0-4.0): VBlank rate multiplier applied while slowdown boost is
+  engaged, replacing the hardcoded /2 interval division.
+- Read every worker iteration -> tunable live via settings overlay (F4) or
+  dfkbl.toml (restart required for file edits).
+- Deployed config starts at 2.5 (user reported 2.0 still too slow).
+- **Status**: IN PROGRESS - user tuning "feels right" value manually.
+
+## Iteration 16 (2026-08-25)
+
+- **Detection bug fixed**: previous engage condition (`gap >= 3` instantaneous)
+  could never trigger on strict half-rate skipping (gap == 2 steady-state), so
+  the boost only flickered on during irregular load spikes. This is why
+  multiplier 2.0 still "felt slow" - under the model 2.0 = exact parity.
+- Detection rewritten: ~96 ms windowed time-weighted average of vblank-to-swap
+  gap (sawtooth means: normal ~0.5, half-rate ~1.5). Engage >= 1.3 sustained
+  2 windows; disengage <= 0.9 or not actively rendering, 2 windows.
+- Multiplier cvar range corrected 1.0-4.0 -> 1.0-3.0 with honest docs:
+  effective slowdown ~= 30 Hz * mult at 60 Hz mode (1.5 ~= 45 fps target,
+  2.0 = parity, >2 = heavy scenes faster than normal pace).
+- Config reset to 1.5 (was live-tuned to 4.0 via F4 in prior session).
+- **Status**: IN PROGRESS - awaiting verification with working engagement.
+
+## Iteration 17 (2026-08-25)
+
+- **Model falsified by user testing**: multiplier 1 vs 3 produced identical
+  behavior (fps floor ~87 unchanged). Slowdown depth is INDEPENDENT of VBlank
+  rate -> the mechanic is guest-time-based (assist waits / clock-scaled sim
+  advancement), not vblank-count-based frame skipping. Explains why prior
+  boost only perturbed slowdown onset/release transitions (detection windows)
+  and never the plateau.
+- Consequence: no external config knob can tune this slowdown. Only levers
+  that reach time-based logic: guest_time_scalar (global - breaks all pacing,
+  not viable) or patching the guest assist routine (requires identifying the
+  function among dat15's ~5798 registered functions via RE around timer/wait
+  kernel imports).
+- `slowdown_pacing_boost` default flipped to false; cvars retained for titles
+  with genuinely vblank-paced slowdown.
+- **Status**: PAUSED - slowdown depth accepted as-is pending optional RE work
+  on the dat15 assist routine.
+
+## Iteration 18 (2026-08-25)
+
+- **xenia-edge investigation** (i:/workspace/xenia-edge): no ready-made
+  slowdown solution exists there. Relevant pieces are equivalent (fixed 50/60Hz
+  `guest_display_refresh_cap` vblank worker) or orthogonal (guest fiber
+  scheduler = thread fairness, not CPU throttling; host-only framerate_limit).
+  Community DB labels sibling DFK title with "vsync-off-speedup", confirming
+  the series' normal-speed pacing is vblank-coupled; issue #439 has nothing on
+  the assist plateau.
+- Synthesis: normal speed tracks vblank rate (confirmed both emulators) but
+  plateau ignores it -> game likely switches loop pacing mid-scene from
+  "wait vblank" to self-timed waits under load.
+- **Added instrumentation**: cvar `slowdown_debug_log` (GPU, default false).
+  Once/second logs `[slowdown-debug] vb/s={} swaps/s={} avg_gap={} boost={}`.
+  Swap counter (`swap_count_`) added to GraphicsSystem, bumped in
+  NotifySwapSubmitted.
+- Diagnostic procedure: enable via config/F4, fly into heavy section ~20s,
+  read logs. Interpretation: swaps/s collapse with vb/s constant => plateau is
+  self-timed at measured swaps/s (that number IS the assist target rate);
+  avg_gap distribution shows whether skips are uniform or bursty.
+- **Status**: IN PROGRESS - awaiting user log capture during bullet hell.
+
+## Iteration 19 (2026-08-25)
+
+- **ROOT CAUSE FOUND - slowdown is backend stall, not game logic.**
+  Telemetry (dfkbl_042.log) during heavy sections: vb/s constant, swaps/s dips
+  to ~69-81 of 90 exactly when GPU [error] volume spikes to 10K+ lines/sec.
+  Mechanism: dense scenes -> mass failing draws/resolves (known soft-fail ops)
+  -> D3D12 backend falls behind -> guest ring buffer backpressure blocks the
+  game main thread mid-loop -> effective sim rate drops -> perceived slowdown.
+  Real Xenos executes these ops natively at speed; console has no such stall.
+- Earlier hypotheses falsified: vblank-count skipping (mult test), pure
+  step-scaling assist (render cadence stays high), original-BL selectable
+  modes (disc has none - correction from user).
+- Static call graph built for dat15 (4665 funcs resolved; hubs sub_8804B0B8 /
+  sub_8804C210) - shelved; RE of game no longer needed for this issue.
+- **Fix direction**: make failing GPU paths near-zero-cost (fast reject before
+  any state work), or properly support/skip the offending resolve/draw classes.
+  Target: eliminate error-storm correlation with swap-rate dips.
+- **Status**: IN PROGRESS - backend optimization next.
+
+## Iteration 20 (2026-08-25)
+
+- **True root cause identified: synchronous logging saturating the CP thread.**
+  CP instrumentation ([cp-debug]) showed exec_ms=967-999 (100% saturation) with
+  kwords/s collapsing to 3K during heavy scenes - time burned without consuming
+  ring words. Error MIX vs xenia-edge is identical (Failed-in-backend 66K vs
+  59K, k_1_REVERSE 386K vs 477K, unsupported-vb 66K vs 59K) so op coverage /
+  failure cost are NOT the differentiator. The difference: xenia-edge's logger
+  queues to a dedicated thread; ours uses synchronous spdlog sinks - every
+  REXGPU_ERROR blocks the CP thread on format + console + file write. ~520K
+  error lines/session bursting >10K/s during hell = CP starves the game's
+  read-pointer polling -> guest self-throttles -> slowdown.
+  Iteration 13's rate-limiters were lost in the v0.10.0 rebuild (they lived in
+  the old futari SDK tree only).
+- **Fix applied** (rexglue-sdk v0.10.0 tree): first-N rate limiters re-added at
+  all three hot sites - util/draw.cpp unsupported-vb (16), draw.cpp non-color
+  dest (16), command_processor.cpp Failed-in-backend (8), matching iter 13.
+- Verification criteria for next run: [cp-debug] exec_ms during hell should
+  drop from ~1000 to low hundreds; swaps/s pinned at vb/s; slowdown depth
+  reduced or gone. Log volume should collapse to iter-13 levels (~50 lines).
+- **Status**: IN PROGRESS - awaiting user verification run.
+
+## Iteration 21 (2026-08-25)
+
+- **VERIFIED FIXED by user + logs** (dfkbl_044): slowdown now matches console
+  behavior - swaps/s tracks load proportionally (90 normal -> 60 sustained hell
+  -> 45 peak burst -> instant recovery), instead of constant pathological dips.
+  User confirms "feels right". [slowdown-debug] avg_gap healthy (0.09-0.61).
+- Residual note: CP thread runs ~96% saturated even outside hell (exec_ms
+  950-1016); xenia-edge has headroom on identical workload. Explains slightly
+  reduced smoothness vs xenia-edge during transitions. Not a correctness issue;
+  future work = D3D12 per-draw submission cost optimization.
+- Debug cvars remain available (default off): slowdown_debug_log,
+  slowdown_pacing_boost (off), slowdown_pacing_boost_multiplier.
+- **Status**: RESOLVED - slowdown mechanic now authentic; smoothness gap
+  documented as optional future optimization.
+
+## Iteration 22 (2026-08-25)
+
+- **NEW ISSUE (user repro)**: BL mode -> exit to Game Mode menu -> BL again ->
+  module fails to reload. Log shows `Recompiled module 'dat15.bin' already
+  loaded; refusing duplicate load` (x3 attempts).
+- Code path: LoadUserModule -> module_libraries_.emplace fails. Unload path
+  (UnloadUserModule) DOES erase the key - so either unload never ran, or state
+  diverged another way. Static analysis insufficient to determine which.
+- Added trace logging: XexLoadImage (existing-vs-fresh + load_count),
+  XexUnloadImage (path + count + last_ref), UnloadUserModule (recomp found?,
+  map size), duplicate-refusal (map size).
+- Deployed rexruntime.dll with tracing.
+- **Status**: IN PROGRESS - awaiting repro run with trace logs to identify
+  exact sequence; fix direction depends on whether unload is skipped vs
+  partially executed.
+
+## Iteration 23 (2026-08-25)
+
+- **ROOT CAUSE FOUND via trace logs** (dfkbl_046.log): the kernel
+  canonicalizes loaded module paths to NT device form. Load registered under
+  'game:\dat15.bin' (normalizes to 'dat15.bin' -> match), but unload calls
+  FindRecompiledModule(module->path()) with
+  '\Device\Harddisk0\Partition1\dat15.bin'. NormalizeGuestPath's device-prefix
+  strip keys on ':' which NT paths lack -> normalized to
+  'device/harddisk0/partition1/dat15.bin' != 'dat15.bin' -> recomp NOT FOUND ->
+  module_libraries_ erase skipped (map size stayed 1) -> all reloads refused.
+  Trace line: "UnloadUserModule(...): recomp=NOT FOUND module_libraries=1".
+- **Fix**: FindRecompiledModule now also matches on the extracted filename
+  (utf8_find_name_from_guest_path, lowercased), robust against any path form
+  (drive-letter, NT device, bare name). rexruntime.dll deployed.
+
+## Iteration 24 (2026-08-25)
+
+- **VERIFIED FIXED** (dfkbl_047.log, user multi-mode stress test):
+  - 8 load/unload cycles across dat15/dat164/dat165, zero refusals, zero
+    recomp=NOT FOUND, zero criticals.
+  - Unload traces now show recomp=found + "Unregistering module" (5798/5931/
+    5800 functions) every time; reloads register fresh cleanly.
+  - Cross-mode sequence verified: BL x4 reload -> Arrange (dat165) -> Novice
+    (dat164) -> BL -> Arrange -> all clean on shared base 0x88030000.
+- Trace logging retained in rexruntime.dll for future module issues; consider
+  demoting to debug level later.
+- **Status**: RESOLVED - game-mode module reload/unload fully working;
+  iteration 23 fix verified.
+
+## Iteration 25 (2026-08-25)
+
+- **Smoothness gap investigation** (revisiting iter 21 residual): found that
+  ANY registered UI drawer forces PaintMode::kUIThreadOnRequest for ALL guest
+  output presentation (presenter.cpp GetDesiredPaintModeFromUIThread). ImGui
+  Drawer + achievement notification register permanently, so the low-latency
+  kGuestOutputThreadImmediately path is never taken in practice. Closing F3/
+  backtick only trims ImGui raster cost; paint mode stays UI-thread.
+- **Added cvar `present_guest_thread_immediate`** (UI/Presenter, default
+  false): forces immediate guest-thread presentation even with drawers
+  registered. Trade-off: overlay contents freeze during gameplay (refresh on
+  menu transitions / window events).
+- A/B test protocol: run hell section twice with slowdown_debug_log on -
+  (A) cvar absent/false, (B) true. Compare swap-dip depth, cp-debug exec_ms,
+  subjective smoothness.
+- Other cheap levers if B wins partially: close overlays anyway (raster cost),
+  d3d12_queue_priority, windowed-borderless + VRR.
+- **Status**: IN PROGRESS - awaiting user A/B comparison.
+
+## Iteration 26 (2026-08-25)
+
+- **A/B results** (A=049 UI-thread present, B=050 guest-thread immediate),
+  swap-cadence distribution over each session:
+  - Full rate (>=85/s): A 35 -> B 40 samples
+  - 70-84: A 16 -> B 17
+  - 55-69: A 36 -> B 31
+  - Deep dips (<55/s): A 7 -> B 3 (cut by more than half)
+- Verdict: B is a real but modest win - fewer deep dips, more full-rate time;
+  mid-range unchanged. Confirms the UI-thread present hop costs something, but
+  the dominant limiter stays CP saturation (exec_ms ~950-1016 in BOTH runs).
+  Smoothness parity with xenia-edge requires D3D12 submission-throughput work.
+- cvar `present_guest_thread_immediate` retained as opt-in perf mode (default
+  false, overlays freeze during gameplay while enabled).
+- **Status**: RESOLVED - measured, documented, opt-in available. Remaining
+  smoothness headroom = backend throughput (future work).
