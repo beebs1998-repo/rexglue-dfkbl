@@ -1,1 +1,5 @@
 # Dynamic entrypoints for the dfkbl game-mode module dat15.bin
+
+[[functions]]
+address = 0x88031B30
+name = "sub_88031B30"
