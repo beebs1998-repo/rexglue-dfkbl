@@ -1,0 +1,82 @@
+# Regenerates the recompiled C++ for the DFKBL entrypoint and all three
+# game-mode modules, then restores the project-maintained glue files that a
+# codegen run would otherwise clobber.
+#
+# Requires:
+#   - the `rexglue` CLI (built from thirdparty/rexglue-sdk), and
+#   - the game files in game_data/ (default.xex, dat15/164/165.bin).
+#
+# Usage:
+#   .\scripts\codegen_all.ps1                 # incremental
+#   .\scripts\codegen_all.ps1 -IgnoreStamp    # force full regeneration
+#   .\scripts\codegen_all.ps1 -Rexglue <path> # explicit CLI path
+
+[CmdletBinding()]
+param(
+    [string]$Rexglue = "",
+    [switch]$IgnoreStamp
+)
+
+$ErrorActionPreference = 'Stop'
+$root = Split-Path -Parent $PSScriptRoot
+Set-Location $root
+
+# Locate the rexglue CLI. It is built as part of the SDK, so it lands in the
+# SDK's own output dir (e.g. thirdparty/rexglue-sdk/out/win-amd64/rexglue.exe),
+# not the project's out/build.
+if (-not $Rexglue) {
+    $names = @('rexglue.exe', 'rexglue')
+    $searchRoots = @('out', 'thirdparty', 'build') |
+        ForEach-Object { Join-Path $root $_ } |
+        Where-Object { Test-Path $_ }
+
+    $candidates = @(
+        foreach ($sr in $searchRoots) {
+            foreach ($name in $names) {
+                Get-ChildItem -Path $sr -Recurse -Filter $name -File -ErrorAction SilentlyContinue |
+                    Select-Object -ExpandProperty FullName
+            }
+        }
+        (Join-Path $root 'rexglue.exe')
+        (Join-Path $root 'rexglue')
+    )
+
+    $onPath = Get-Command rexglue -ErrorAction SilentlyContinue
+    if ($onPath) { $candidates += $onPath.Source }
+
+    $Rexglue = $candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+}
+if (-not $Rexglue) {
+    throw "rexglue CLI not found. Build it (cmake --build --preset win-amd64-release --target rexglue) or pass -Rexglue <path>."
+}
+Write-Host "Using rexglue: $Rexglue"
+
+foreach ($required in @('game_data/default.xex', 'game_data/dat15.bin', 'game_data/dat164.bin', 'game_data/dat165.bin')) {
+    if (-not (Test-Path (Join-Path $root $required))) {
+        throw "Missing $required - codegen needs the game files (see README.md)."
+    }
+}
+
+$common = @('codegen', 'dfkbl_manifest.toml')
+if ($IgnoreStamp) { $common += '--ignore-stamp' }
+
+# The three game-mode modules all share guest base 0x88000000, so a combined run
+# is rejected by the overlap check. One target per invocation; the entrypoint is
+# always regenerated alongside the selected module.
+foreach ($target in @('dat15', 'dat164', 'dat165')) {
+    Write-Host "=== codegen: $target ==="
+    & $Rexglue @common --target $target
+    if ($LASTEXITCODE -ne 0) { throw "codegen failed for target '$target' (exit $LASTEXITCODE)" }
+}
+
+# codegen rewrites these with only the targets from the last run. Restore the
+# project-maintained merged versions (all three modules together) and the
+# auto-codegen-disabled rexglue.cmake.
+Write-Host "=== restoring project-maintained glue files ==="
+git checkout -- `
+    generated/rexglue.cmake `
+    generated/default/dll_targets.cmake `
+    generated/default/module_registry.cpp
+if ($LASTEXITCODE -ne 0) { throw "git checkout failed (exit $LASTEXITCODE)" }
+
+Write-Host "Done. Rebuild with: cmake --build --preset win-amd64-release --parallel"
