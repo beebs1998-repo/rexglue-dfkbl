@@ -16,10 +16,13 @@ Two facts dominate everything else:
    project builds without the game. Do not hand-edit generated files; regenerate
    them instead (`scripts/codegen_all.ps1`).
 2. **The SDK is a pinned submodule with local patches.** `thirdparty/rexglue-sdk`
-   points at `beebs1998-repo/rexglue-sdk` @ `c5b544dc52d7bcd074c29c3b8ee797a0fff87bcd`
-   (`v0.10.0` + 4 commits: adaptive VBlank pacing + rate-limited GPU logs, D3D12
-   vsync/guest-present cvars, module-reload path fix, SSSE3 build flag). Building
-   against a different SDK can change/crash behaviour.
+   points at `beebs1998-repo/rexglue-sdk` @ `a1b93af5c2cca9d49b65891a419e95210ad697b7`
+   (pristine mainline: `v0.10.0` + 5 commits — SSSE3 build flag, module-filename
+   match fix, NT device-prefix strip fix, `d3d12_submit_on_primary_buffer_end=false`
+   default, cvar TOML save-serialization fix). Config cvars are the pristine
+   v0.10.0 set; the experiments line (pacing/present cvars, log rate-limiters)
+   lives on the `legacy` branch. Building against a different SDK can
+   change/crash behaviour.
 
 ## Layout
 

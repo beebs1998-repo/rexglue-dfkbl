@@ -377,3 +377,34 @@ Runtime/iteration log for unresolved addresses, missing symbols, and runtime exc
   `[error] [gpu]` resolve-error flood returns (cosmetic, present in stock
   v0.10.0). Main repo pin rebuilt; `dfkbl.toml` replaced with the pristine
   config (fix active via the flipped default, no override line).
+
+## Iteration 28 (2026-10-19)
+
+- **SDK cvar TOML serialization bug fixed + resynced.** Symptom: launcher
+  invocation inputs (`--game_data_root=...`, `--user_data_root=...`) were
+  re-persisted into `dfkbl.toml` as absolute backslash paths
+  (`game_data_root = "i:\workspace\rexglue-dfkbl\game_data"`), and
+  SerializeToTOML wrote string values unescaped - the `\w` illegal TOML escape
+  made the whole file unparseable, so the next LoadConfig's `toml::parse_file`
+  rejected the config wholesale (settings silently reset to defaults).
+- Root cause (SDK `src/core/cvar.cpp` `SerializeToTOML`): (a) string values
+  written raw with no TOML basic-string escaping; (b) no distinction between
+  invocation-sourced cvars (command line / environment) and persisted settings.
+- Fix: fork commit `a1b93af` on `fix/cvar-toml-serialization`
+  (fast-forwarded onto the pristine mainline): new `EscapeTomlString`
+  (backslash, quote, control chars -> `\uXXXX`) + both `SerializeToTOML`
+  overloads skip `Source::kCommandLine` / `Source::kEnvironment`. Cvar unit
+  tests extended for round-trip and source precedence; includes a writable-temp
+  probe fix for sandboxed test hosts.
+- Resync executed: local SDK `main` fast-forwarded `34ea1a0` -> `a1b93af`, pin
+  bump committed (`7d7f0d2`), full rebuild clean (dfkbl.exe + all 3 module DLLs
+  + rexruntime/rexgpu relinked with the fixed rexcore).
+- **Removed `game_data_root` / `user_data_root` lines from `dfkbl.toml`.**
+  Required even with the fix: once a launch loads them from the file they are
+  re-sourced as `kConfig`, and config-file values ARE persisted - so stale
+  entries would keep re-saving themselves forever. Roots now fall back to
+  compiled-in defaults and are supplied per-launch via the command line, which
+  the save path no longer captures.
+- **Status**: RESOLVED at source level; awaiting a launch to confirm
+  `dfkbl.toml` round-trips (with control-cvar changes via F4) and that root
+  paths no longer appear in the file.
