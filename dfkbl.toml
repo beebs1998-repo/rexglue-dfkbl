@@ -3,6 +3,16 @@
 # = false is the validated slowdown fix and the SDK default, so its line missing from a
 # written file means the fix is active. The explicit line below pins it for stale-SDK safety.
 d3d12_submit_on_primary_buffer_end = false
+# Deployed-release logging: a fixed rotating file instead of the default
+# sequential dfkbl_NNN.log naming, which mints a new file every session and
+# never prunes old ones (unbounded disk growth). This caps logs at ~12 MB
+# total while keeping [error]/[critical] lines for crash diagnosis. Per-run
+# capture is still available via --log-level/--log-file on the command line.
+log_file = "logs/dfkbl.log"
+log_max_file_size_mb = 4
+log_max_files = 3
+log_level = "error"
+
 window_width = 1280
 window_height = 720
 fullscreen = false

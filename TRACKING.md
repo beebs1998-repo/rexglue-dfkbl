@@ -426,3 +426,83 @@ Runtime/iteration log for unresolved addresses, missing symbols, and runtime exc
     is a template and is not the file the game writes.
 - **Status**: RESOLVED - verified by user (root cvars gone); F4/default-equal
   omission explained and documented.
+
+## Iteration 29 (2026-10-19)
+
+- **Deployed-release log disk usage bounded** (config-only, no SDK change).
+  Symptom: default logging minted a new sequential `logs/dfkbl_NNN.log` file
+  every session (up to `log_max_file_size_mb`=5 each) and never pruned old
+  ones - unbounded disk growth across runs.
+- Root cause (SDK `src/core/logging.cpp`): when the `log_file` cvar is empty,
+  `rex_app.cpp` sets `log_config.app_name`/`log_dir` and
+  `NextSequentialLogPath` picks the next free `dfkbl_NNN.log` per run.
+  `log_max_files`/`log_max_file_size_mb` rotation only bounds size within a
+  single run's filename, not across runs; no cvar disables the file sink.
+- Fix: pinned log cvars in the shipped `dfkbl.toml` template -
+  `log_file = "logs/dfkbl.log"` (all runs rotate within one fixed name,
+  `dfkbl.log` + up to 2 rolled copies), `log_max_file_size_mb = 4`,
+  `log_max_files = 3` (hard cap ~12 MB), `log_level = "error"` (only
+  actionable `[error]`/`[critical]` lines persisted, per AGENTS.md).
+- Persistence verified by design: `SerializeToTOML` (cvar.cpp:580) saves
+  every non-default value, so the pins survive F4 re-saves; `kInitOnly`
+  lifecycle (cvar.cpp:311) only fires after finalize - config loads earlier,
+  so the size/count cvars are honored.
+- Caveats: relative `log_file` resolves against process CWD (same convention
+  as today's `logs/`); per-run separation now spans the rolled files instead
+  of one file per run. Per-run capture recoverable via `--log-level=info` /
+  `--log-file=...` CLI overrides (command-line source is never persisted).
+  Pre-existing installs keep old `dfkbl_NNN.log` files on disk until manually
+  cleaned up. "Zero file logging" / auto-pruning would need an SDK-fork
+  patch - deliberately out of scope.
+- **Status**: OPEN for verification - confirm a release run writes only
+  `logs/dfkbl.log`(+rotations) and the toml re-save retains the four pins.
+
+## Iteration 30 (2026-10-19)
+
+- **Unbounded GPU error flood restored; iter-13 rate limiters lost in SDK
+  resync.** User Resource Monitor capture showed `dfkbl.log` written at
+  ~1-1.5 MB/s during a playtest (three 4 MB rotations in ~13s) plus ~1 MB/s
+  of System-process write-back and NTFS journal churn (`$LogFile`, `$SDRB`).
+- Root cause chain: (a) `log_level = "error"` (iter 29) correctly filtered
+  info/debug - the log held only `[error]` lines; (b) but the ~10k lines/s
+  error flood itself was the *known* DFKBL GPU resolve/draw failures
+  (iter 3/13), which iter 13 rate-limited to first 8/16 per run at the SDK
+  call sites - those patches had been applied to the **futari** project's SDK
+  copy, and the dfkbl-side "sync" predates the iter-14 v0.10.0 rebuild and
+  iter-27/28 resyncs, so the pristine mainline restored all three call sites
+  as unconditional (`draw.cpp:792`, `draw.cpp:1000`,
+  `command_processor.cpp:1388`). Each error line is synchronously flushed
+  (flush_on(info) => FlushFileBuffers per message), producing per-message
+  write-through churn - the same mechanism as the iter-20 CP-thread stall
+  finding, reintroduced via the log file.
+- Storage impact: bounded by iter-29 rotation (~12 MB cap), SSD endurance
+  unaffected (~GB/hour scale). Runtime impact: unnecessary sync-flush churn
+  on the render thread during bullet hell.
+- Fix (two phases, as planned):
+  - Phase B stopgap (config-only, now removed): `[log.levels] gpu =
+    "critical"` in both tomls, supported by
+    `ParseCategoryLevelsFromConfig` (logging.cpp:540). Suppressed all `gpu`
+    errors including unknown ones; an F4 save silently drops the section
+    (SaveConfig rewrites flat cvar keys only) - documented, no longer
+    applicable.
+  - Phase A (real fix): re-ported iter-13's rate limiters to the dfkbl SDK
+    fork at `a1b93af` -> fork commit `cd40204` on `main`
+    (`perf(gpu): rate-limit known unresolvable resolve/draw error floods`):
+    first 16 per run for "Unsupported resolve vertex buffer format"
+    (+ decoded vf0: type/size/address/endian) and "Tried to resolve to
+    format ... not a ColorFormat" (+ raw copy_dest_format, depth flag),
+    first 8 for "Failed in backend", each with a one-time
+    "rate-limited: additional occurrences suppressed" notice (static
+    std::atomic counters). Submodule pin bumped (`2714a4f`), rexgpu-xenos
+    rebuilt clean.
+- Deploy note: the GPU plugin is runtime-loaded, staged by a POST_BUILD copy
+  of the *host* target only - so rebuilding only `rexgpu-xenos.dll` builds
+  the fresh DLL into the SDK out dir without relinking `dfkbl.exe`, and the
+  copy into `out\build\win-amd64-release\` must be done by hand (copied,
+  sizes/timestamps match; this is the same manual redeploy iter 13/14 did).
+  A clean full rebuild stages everything automatically.
+- Stopgap removed from both `dfkbl.toml` copies after the rate-limited
+  rebuild (full `gpu` error visibility back at <=~40 lines/run).
+- **Status**: OPEN for user verification - Resource Monitor during bullet
+  hell should show ~zero `dfkbl.log` writes, with the log gaining at most a
+  handful of `[error]` lines (bounded per unique message) per session.
