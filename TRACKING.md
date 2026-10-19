@@ -454,8 +454,11 @@ Runtime/iteration log for unresolved addresses, missing symbols, and runtime exc
   Pre-existing installs keep old `dfkbl_NNN.log` files on disk until manually
   cleaned up. "Zero file logging" / auto-pruning would need an SDK-fork
   patch - deliberately out of scope.
-- **Status**: OPEN for verification - confirm a release run writes only
-  `logs/dfkbl.log`(+rotations) and the toml re-save retains the four pins.
+- **Status**: VERIFIED (2026-10-19) - F4 save rewrote the live toml and all
+  four log pins survived (`log_level = "error"`, `log_file`,
+  `log_max_file_size_mb = 4`, `log_max_files = 3`); the stopped-gap
+  `[log.levels]` section is gone (SaveConfig cannot re-emit it). Session log
+  is a single `logs/dfkbl.log` (CWD-relative) instead of sequential files.
 
 ## Iteration 30 (2026-10-19)
 
@@ -503,6 +506,9 @@ Runtime/iteration log for unresolved addresses, missing symbols, and runtime exc
   A clean full rebuild stages everything automatically.
 - Stopgap removed from both `dfkbl.toml` copies after the rate-limited
   rebuild (full `gpu` error visibility back at <=~40 lines/run).
-- **Status**: OPEN for user verification - Resource Monitor during bullet
-  hell should show ~zero `dfkbl.log` writes, with the log gaining at most a
-  handful of `[error]` lines (bounded per unique message) per session.
+- **Status**: VERIFIED by user (2026-10-19) - Resource Monitor shows no log
+  write spam during playtest. Session log: single `logs/dfkbl.log`, 13 KB
+  across two runs (was ~4 MB per ~4s); per-message rate limits fired with
+  decoded details (vf0 type/size/address/endian, raw copy_dest_format) and
+  exactly one "rate-limited: additional occurrences suppressed" notice per
+  message per run. F4 save retained the four log pins.
