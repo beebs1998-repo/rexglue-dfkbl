@@ -368,3 +368,12 @@ Runtime/iteration log for unresolved addresses, missing symbols, and runtime exc
   the `no_vsync_interval_ticks` path runs 1000 vblanks/s by design and races
   the sim (~650+ swaps/s observed) unless something caps presents.
 - **Status**: RESOLVED - root cause fixed at default; slowdown class closed.
+- **Mainline adopted (2026-10-19)**: the pristine lineage is now the fork's
+  main branch (`34ea1a0` = v0.10.0 c94f5eb + SSSE3 39626a2 + module-filename
+  match 09ef27d + NT-prefix strip a388c9d + this flip; force-pushed to
+  beebs1998-repo/rexglue-sdk). The pre-adoption lineage (f7d591f: adaptive
+  pacing, telemetry, rate-limited GPU logs, present cvars) is preserved on the
+  `legacy` branch; its cvars no longer exist in the mainline - notably the
+  `[error] [gpu]` resolve-error flood returns (cosmetic, present in stock
+  v0.10.0). Main repo pin rebuilt; `dfkbl.toml` replaced with the pristine
+  config (fix active via the flipped default, no override line).
