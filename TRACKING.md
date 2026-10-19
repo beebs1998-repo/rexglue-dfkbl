@@ -512,3 +512,43 @@ Runtime/iteration log for unresolved addresses, missing symbols, and runtime exc
   decoded details (vf0 type/size/address/endian, raw copy_dest_format) and
   exactly one "rate-limited: additional occurrences suppressed" notice per
   message per run. F4 save retained the four log pins.
+
+## Iteration 31 (2026-10-19)
+
+- **Xenia Canary-imported replay saves invisible / unreadable in the DFKBL
+  replay list.** Saves copied from a Xenia Canary profile
+  (`user_data/B13EBABEBABEBABE/435A07DF/00000001/`, 19 `REPLAY DATA NN`
+  packages + `GAME DATA`/`SYSTEM DATA`) did not appear as playable entries.
+- Root cause chain (guest-side static analysis via decrypted `default.xex`
+  + runtime instrumentation): (a) the guest save flow
+  (`sub_820B5AE0`, recomp module 45) opens replay packages through
+  `XamContentCreate*` with content type **`0x00000001` (saved game)**, not
+  0x03 as first assumed; (b) the host `ContentManager::ReadContentHeaderFile`
+  only recognized raw `XCONTENT_AGGREGATE_DATA` dumps as `.header` payloads,
+  and reinterpreted full CON/LIVE/PIRS STFS package headers (as written by
+  real hardware/Xenia) through the raw-dump path - the same wrong-header
+  pattern the Xenia Canary save parsers exhibit; (c) `ListContent` now
+  falls back to deriving `XCONTENT_AGGREGATE_DATA` from the directory name
+  when a `.header` file is absent/unparseable, which is what actually
+  surfaces the imported replays; the import has no per-entry `.header`
+  files at all (`Headers/00000001/` holds only `GAME DATA`/`SYSTEM DATA`
+  328-byte raw dumps).
+- Fix (SDK fork commit `08c9774`, `fix(xam): accept full XContent/STFS
+  package headers in ReadContentHeaderFile`): reader takes
+  `min(file_size, sizeof(StfsHeader))` bytes; valid container magic
+  -> extract `metadata.content_type` + first non-empty localized
+  display_name, keep file_name as the directory name; otherwise treat the
+  head as a raw dump. Missing/unreadable headers return
+  `X_STATUS_NO_SUCH_FILE` so the `ListContent` fallback engages.
+  `XamContentCreateEnumerator` lost its leftover debug line; the temporary
+  `[dbg]` traces in `content_manager.cpp`/`xam_content.cpp`/
+  `xam_enum.cpp` were added for the investigation and fully removed.
+- Diagnosis tooling note: `[dbg]` traces were emitted at `[error]` level
+  (captured by `log_level = "error"`) into `logs/dfkbl.log`; instrumented
+  keypress automation lived in temp (`press_seq.ps1`/`press_keys.ps1`).
+- **Status**: VERIFIED by user (2026-10-19) - replay lists 1-19 and
+  `REPLAY DATA 01`/`19` load and play with no broken replay data
+  (log evidence: 21-item enumeration, `XamContentCreate*` result
+  `0x00000000` for all 19 replay opens). Rebuilt with the committed
+  change; `keybind_start = "1"` local `dfkbl.toml` change deliberately
+  left uncommitted.
