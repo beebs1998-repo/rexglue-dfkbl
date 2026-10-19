@@ -2,6 +2,11 @@
 
 Runtime/iteration log for unresolved addresses, missing symbols, and runtime exceptions.
 
+> **GPU submit-throughput findings (2026-10-19):** the follow-up to iter-26's
+> "D3D12 submission throughput" hypothesis is complete — see
+> `XENIA_CANARY_SLOWDOWN_FINDINGS.md` (root cause, evidence chain, the fix,
+> and the rexglue transfer checklist). The transfer is now VALIDATED (iter 27).
+
 ## Iteration 1 (2026-08-11)
 
 - Project initialized (rexglue init), codegen clean, build clean.
@@ -336,3 +341,30 @@ Runtime/iteration log for unresolved addresses, missing symbols, and runtime exc
   false, overlays freeze during gameplay while enabled).
 - **Status**: RESOLVED - measured, documented, opt-in available. Remaining
   smoothness headroom = backend throughput (future work).
+
+## Iteration 27 (2026-10-19)
+
+- **Root cause of the entire slowdown class found via isolated rebuild.**
+  Fresh tree (`rexglue-dfkbl-fresh`) built from upstream SDK v0.10.0 (c94f5eb)
+  + correctness cherry-picks only (module-reload fix 09ef27d/a388c9d - verified
+  by module-switch playtest; SSSE3 build flag). No pacing/present/telemetry
+  experiments. Results:
+  - Pristine v0.10.0 REPRODUCES the half-speed/quantized slowdown.
+  - Single toml line `d3d12_submit_on_primary_buffer_end = false` FIXES it -
+    same class as xenia-canary's fix for the same title (see
+    `XENIA_CANARY_SLOWDOWN_FINDINGS.md`: per-chunk submission pump, ~2x
+    fence-signal + ExecuteCommandLists + allocator churn per ~0.13ms chunk,
+    ~140-190 chunks/dip-frame).
+- **Prior mitigations were not the root fix** (kept, harmless): iter 13/20 log
+  rate-limiters, iter 25/26 present-hop tuning, iter 14-18 pacing knobs. The
+  CP ~96% saturation residual noted in iters 21/26 was THIS submission churn.
+- **Fix deployed**: SDK default flipped to `false` in the fork (commit f7d591f,
+  pushed to beebs1998-repo/rexglue-sdk main; d3d12 backend only, vulkan
+  untouched/untested), submodule pin bumped (be0e066), main tree rebuilt.
+  `dfkbl.toml` retains an explicit `false` (harmless, robust against stale DLLs).
+- Note: with the fix live, `vsync=true` (GPU cvar) gives correct 60 vblank/s
+  guest pacing natively - Special K forced-60 no longer required. Keep
+  `vsync=false` off the table for playtests unless tearing is acceptable:
+  the `no_vsync_interval_ticks` path runs 1000 vblanks/s by design and races
+  the sim (~650+ swaps/s observed) unless something caps presents.
+- **Status**: RESOLVED - root cause fixed at default; slowdown class closed.
