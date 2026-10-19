@@ -47,7 +47,7 @@ menu; all three share guest base `0x88000000`.
 | `generated/rexglue.cmake` | SDK/CMake glue (codegen auto-generation disabled — see below) |
 | `dfkbl_manifest.toml` | Codegen manifest (entrypoint + 3 modules) |
 | `dfkbl*_functions.toml` | Extra dynamic entrypoints registered per target |
-| `dfkbl.toml` | Runtime settings (auto-written; also editable via the F4 overlay) |
+| `dfkbl.toml` | Settings template — the live copy is written next to the exe; editable via the F4 overlay |
 | `thirdparty/rexglue-sdk/` | Patched ReXGlue SDK (git submodule, pinned) |
 | `scripts/codegen_all.ps1` | Regenerate all recompiled code (needs the game) |
 | `TRACKING.md` | Iteration log (bugs found + fixes) |
@@ -99,19 +99,31 @@ The game writes logs to `logs/` and saves to `user_data/`.
 
 ## Settings
 
-Settings live in `dfkbl.toml` and can be changed live from the in-game overlay
-(press **F4**). Defaults here use keyboard input (`mnk_mode = true`); the key
-bindings are listed in `dfkbl.toml`.
+The game reads and writes `dfkbl.toml` **next to the executable** (the copy in
+this repository is a template; run from `out\build\win-amd64-release` and the
+live file is written there). Settings can be changed live from the in-game
+overlay (press **F4**, then *Save to config*).
 
-Notable options added for this title (all in the bundled SDK):
+Saving is **diff-only**: only cvars whose current value differs from the
+compiled-in SDK default are written. A cvar sitting at its default therefore
+does not appear in the file, and a default-equal line is dropped by the next
+save — that is expected, not a desync between the menu and the file.
+
+Notable consequence for this title:
+
+- `d3d12_submit_on_primary_buffer_end` defaults to `false` in the bundled SDK
+  — this flip **is** the validated slowdown fix. Its line is normally
+  *absent* from `dfkbl.toml`; absence == default == fix active. It only
+  appears again if you check it (`true`) in F4.
+
+Current notable options (bundled pristine-mainline SDK):
 
 | Option | Default | Effect |
 | --- | --- | --- |
-| `slowdown_debug_log` | `false` | Once/sec log of vblank/swap rate + boost state |
-| `slowdown_pacing_boost` | `false` | Adaptive VBlank pacing for vblank-paced titles |
-| `slowdown_pacing_boost_multiplier` | `1.0` | VBlank rate multiplier while boost is engaged |
-| `present_guest_thread_immediate` | `true` | Skip the UI-thread present hop (overlay contents freeze during play) |
-| `d3d12_present_vsync` | `false` | Present() sync interval (leave off on this title) |
+| `d3d12_submit_on_primary_buffer_end` | `false` | D3D12 submission at primary buffer end; `false` is the validated slowdown fix for this title (diff-only save usually omits it) |
+| `vsync` | `true` | Present sync; keep on for correct 60 Hz guest pacing |
+| `gpu_allow_invalid_fetch_constants` | `false` | Accept invalid Xenos fetch constants instead of failing the draw |
+| `mnk_mode` | `false` | Keyboard/mouse controller emulation (enabled in the template) |
 
 ## Regenerating the recompiled code (optional)
 

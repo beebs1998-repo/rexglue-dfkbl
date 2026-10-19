@@ -1,4 +1,7 @@
-﻿# dfkbl.toml - runtime cvar configuration (windowed 1280x720; d3d12_submit_on_primary_buffer_end = false is the validated slowdown fix, also the SDK default since the pristine mainline)
+﻿# dfkbl.toml - settings template (the game writes/reads dfkbl.toml next to the exe).
+# Saves are diff-only: default-equal cvars are omitted. d3d12_submit_on_primary_buffer_end
+# = false is the validated slowdown fix and the SDK default, so its line missing from a
+# written file means the fix is active. The explicit line below pins it for stale-SDK safety.
 d3d12_submit_on_primary_buffer_end = false
 window_width = 1280
 window_height = 720
