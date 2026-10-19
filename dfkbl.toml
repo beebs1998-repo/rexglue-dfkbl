@@ -1,8 +1,12 @@
-# Auto-generated cvar configuration
+﻿# dfkbl.toml - runtime cvar configuration (windowed 1280x720; d3d12_submit_on_primary_buffer_end = false is the validated slowdown fix, also the SDK default since the pristine mainline)
+d3d12_submit_on_primary_buffer_end = false
 window_width = 1280
 window_height = 720
-fullscreen = true
-monitor = 1
+fullscreen = false
+gpu_plugin = "xenos"
+gpu_allow_invalid_fetch_constants = true
+game_data_root = "game_data"
+user_data_root = "user_data"
 mnk_mode = true
 keybind_a = "Z"
 keybind_b = "X"
@@ -26,10 +30,3 @@ keybind_dpad_left = "J"
 keybind_dpad_right = "L"
 keybind_back = "Tab"
 keybind_start = "1"
-game_data_root = "game_data"
-user_data_root = "user_data"
-gpu_plugin = "xenos"
-gpu_allow_invalid_fetch_constants = true
-slowdown_pacing_boost_multiplier = 1.000000
-slowdown_debug_log = false
-present_guest_thread_immediate = true
