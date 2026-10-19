@@ -405,6 +405,24 @@ Runtime/iteration log for unresolved addresses, missing symbols, and runtime exc
   entries would keep re-saving themselves forever. Roots now fall back to
   compiled-in defaults and are supplied per-launch via the command line, which
   the save path no longer captures.
-- **Status**: RESOLVED at source level; awaiting a launch to confirm
-  `dfkbl.toml` round-trips (with control-cvar changes via F4) and that root
-  paths no longer appear in the file.
+- **Verified by user playtest (2026-10-19)**: no `*_root` lines reappear in the
+  written toml. F4 menu follow-up query from the test - `d3d12_submit_on_primary_buffer_end`
+  shows UNCHECKED, Save omits the line, checking it writes `= true`. Verified by
+  design, not a regression:
+  - The F4 checkbox shows the CURRENT value (settings_overlay.cpp ~435:
+    `from_string<bool>(current_val)`), not the default - unchecked == false.
+  - The cvar's compiled-in default is `false` (command_processor.cpp:52,
+    `REXCVAR_DEFINE_BOOL(..., false, ...)`; mainline flip from 34ea1a0). 
+  - SerializeToTOML (cvar.cpp:580) persists only `getter() != default_value`
+    entries, so a value equal to its default is omitted: unchecked default ->
+    no line; explicit `true` -> saved. Missing line == default == the slowdown
+    fix is ACTIVE. It would only matter if a build whose default is `true`
+    (stock v0.10.0 / legacy branch) were run against this toml.
+  - Corollary: diff-only saving can never pin a default-equal value - any
+    explicit `false` line is eaten by the next F4 Save. Robustness against
+    stale/legacy DLLs rests on the default flip itself, not the line.
+  - Note: the live config is `exe_dir/dfkbl.toml` (out\build\win-amd64-release\dfkbl.toml,
+    header "# Auto-generated cvar configuration"); the repo-root `dfkbl.toml`
+    is a template and is not the file the game writes.
+- **Status**: RESOLVED - verified by user (root cvars gone); F4/default-equal
+  omission explained and documented.
