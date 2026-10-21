@@ -38552,6 +38552,14 @@ DEFINE_REX_FUNC(__restgprlr_15) {
 	return;
 }
 
+DEFINE_REX_FUNC(sub_88227EE8) {
+	REX_FUNC_PROLOGUE();
+	// stb r4,2(r6)
+	REX_STORE_U8(ctx.r6.u32 + 2, ctx.r4.u8);
+	// blr 
+	return;
+}
+
 DEFINE_REX_FUNC(__savefpr_15) {
 	REX_FUNC_PROLOGUE();
 	// stfd f15,-136(r12)

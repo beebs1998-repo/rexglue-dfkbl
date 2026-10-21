@@ -2,6 +2,11 @@
 
 #include "dfkbl_pch.h"
 
+DECLARE_REX_FUNC(__imp__KeGetCurrentProcessType);
+DECLARE_REX_FUNC(__imp__NtAllocateVirtualMemory);
+DECLARE_REX_FUNC(__imp__NtFreeVirtualMemory);
+DECLARE_REX_FUNC(__imp__NtQueryVirtualMemory);
+DECLARE_REX_FUNC(__imp__RtlInitializeCriticalSection);
 DECLARE_REX_FUNC(__imp__RtlLeaveCriticalSection);
 DECLARE_REX_FUNC(__restgprlr_14);
 DECLARE_REX_FUNC(__restgprlr_15);
@@ -324,4 +329,5 @@ DECLARE_REX_FUNC(sub_8821FFF0);
 DECLARE_REX_FUNC(sub_882200C8);
 DECLARE_REX_FUNC(sub_88220160);
 DECLARE_REX_FUNC(sub_88220208);
+DECLARE_REX_FUNC(sub_882247A8);
 DECLARE_REX_FUNC(sub_88224EB8);

@@ -38821,3 +38821,12 @@ DEFINE_REX_FUNC(sub_88227060) {
 	return;
 }
 
+DEFINE_REX_FUNC(sub_88227180) {
+	REX_FUNC_PROLOGUE();
+	// mtctr r11
+	ctx.ctr.u64 = ctx.r11.u64;
+	// bctr 
+	REX_CALL_INDIRECT_FUNC(ctx.ctr.u32);
+	return;
+}
+

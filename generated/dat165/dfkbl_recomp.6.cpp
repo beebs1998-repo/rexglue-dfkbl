@@ -38619,6 +38619,22 @@ loc_88227384:
 	goto loc_882272E0;
 }
 
+DEFINE_REX_FUNC(sub_88227518) {
+	REX_FUNC_PROLOGUE();
+	// li r3,0
+	ctx.r3.s64 = 0;
+	// lwz r29,80(r31)
+	ctx.r29.u64 = REX_LOAD_U32(ctx.r31.u32 + 80);
+	// b 0x88227528
+	goto loc_88227528;
+loc_88227528:
+	// addi r1,r31,144
+	ctx.r1.s64 = ctx.r31.s64 + 144;
+	// b 0x882275f4
+	__restgprlr_27(ctx, base);
+	return;
+}
+
 DEFINE_REX_FUNC(__savefpr_30) {
 	REX_FUNC_PROLOGUE();
 	// stfd f30,-16(r12)

@@ -38935,10 +38935,8 @@ loc_8821DC58:
 	// mr r8,r8
 	ctx.r8.u64 = ctx.r8.u64;
 	// b 0x8821dc74
-	goto loc_8821DC74;
-loc_8821DC74:
-	// mr r3,r29
-	ctx.r3.u64 = ctx.r29.u64;
+	sub_8821DC74(ctx, base);
+	return;
 loc_8821DC78:
 	// addi r1,r31,144
 	ctx.r1.s64 = ctx.r31.s64 + 144;
@@ -38983,6 +38981,19 @@ DEFINE_REX_FUNC(__restfpr_21) {
 	ctx.f30.u64 = REX_LOAD_U64(ctx.r12.u32 + -16);
 	// lfd f31,-8(r12)
 	ctx.f31.u64 = REX_LOAD_U64(ctx.r12.u32 + -8);
+	// blr 
+	return;
+}
+
+DEFINE_REX_FUNC(sub_8821E6D0) {
+	REX_FUNC_PROLOGUE();
+	// stb r4,1(r6)
+	REX_STORE_U8(ctx.r6.u32 + 1, ctx.r4.u8);
+	// bdzlr- 
+	--ctx.ctr.u64;
+	if (ctx.ctr.u32 == 0) return;
+	// stb r4,2(r6)
+	REX_STORE_U8(ctx.r6.u32 + 2, ctx.r4.u8);
 	// blr 
 	return;
 }

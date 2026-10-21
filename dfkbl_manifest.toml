@@ -8,7 +8,7 @@ game_root = "game_data"
 [entrypoint]
 file_path = "game_data/default.xex"
 out_directory_path = "generated/default"
-includes = ["dfkbl_functions.toml"]
+includes = ["dfkbl_hints.toml", "dfkbl_functions.toml"]
 
 # Game-mode modules (Black Label / Novice / Arrange). All share base 0x88000000
 # and are loaded mutually exclusively based on in-game menu selection.
@@ -16,16 +16,16 @@ includes = ["dfkbl_functions.toml"]
 guest_path = "dat15.bin"
 file_path = "game_data/dat15.bin"
 out_directory_path = "generated/dat15"
-includes = ["dfkbl_dat15_functions.toml"]
+includes = ["dfkbl_dat15_hints.toml", "dfkbl_dat15_functions.toml"]
 
 [[modules]]
 guest_path = "dat164.bin"
 file_path = "game_data/dat164.bin"
 out_directory_path = "generated/dat164"
-includes = ["dfkbl_dat164_functions.toml"]
+includes = ["dfkbl_dat164_hints.toml", "dfkbl_dat164_functions.toml"]
 
 [[modules]]
 guest_path = "dat165.bin"
 file_path = "game_data/dat165.bin"
 out_directory_path = "generated/dat165"
-includes = ["dfkbl_dat165_functions.toml"]
+includes = ["dfkbl_dat165_hints.toml", "dfkbl_dat165_functions.toml"]

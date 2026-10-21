@@ -16521,7 +16521,8 @@ loc_821C67A8:
 	// cmpwi cr6,r29,0
 	ctx.cr6.compare<int32_t>(ctx.r29.s32, 0, ctx.xer);
 	// blt cr6,0x821c6578
-	if (ctx.cr6.lt) goto loc_821C6578;
+	// ERROR: conditional branch to unknown address 0x821C6578
+	if (ctx.cr6.lt) REX_FATAL("Unresolved branch from 0x821C67AC to 0x821C6578");
 	// lwz r28,764(r31)
 	ctx.r28.u64 = REX_LOAD_U32(ctx.r31.u32 + 764);
 	// cmplwi cr6,r28,0
@@ -16554,7 +16555,8 @@ loc_821C67A8:
 	// cmplwi cr6,r3,0
 	ctx.cr6.compare<uint32_t>(ctx.r3.u32, 0, ctx.xer);
 	// beq cr6,0x821c6578
-	if (ctx.cr6.eq) goto loc_821C6578;
+	// ERROR: conditional branch to unknown address 0x821C6578
+	if (ctx.cr6.eq) REX_FATAL("Unresolved branch from 0x821C67E8 to 0x821C6578");
 	// lwz r11,0(r3)
 	ctx.r11.u64 = REX_LOAD_U32(ctx.r3.u32 + 0);
 	// lwz r11,8(r11)
@@ -16665,7 +16667,8 @@ loc_821C68B0:
 	// cmpwi cr6,r14,0
 	ctx.cr6.compare<int32_t>(ctx.r14.s32, 0, ctx.xer);
 	// bge cr6,0x821c6710
-	if (!ctx.cr6.lt) goto loc_821C6710;
+	// ERROR: conditional branch to unknown address 0x821C6710
+	if (!ctx.cr6.lt) REX_FATAL("Unresolved branch from 0x821C68B4 to 0x821C6710");
 loc_821C68B8:
 	// mr r29,r14
 	ctx.r29.u64 = ctx.r14.u64;
@@ -16689,7 +16692,8 @@ loc_821C68D4:
 	// cmplwi cr6,r3,0
 	ctx.cr6.compare<uint32_t>(ctx.r3.u32, 0, ctx.xer);
 	// beq cr6,0x821c6578
-	if (ctx.cr6.eq) goto loc_821C6578;
+	// ERROR: conditional branch to unknown address 0x821C6578
+	if (ctx.cr6.eq) REX_FATAL("Unresolved branch from 0x821C68DC to 0x821C6578");
 	// lwz r11,0(r3)
 	ctx.r11.u64 = REX_LOAD_U32(ctx.r3.u32 + 0);
 	// lwz r11,8(r11)
@@ -16828,7 +16832,8 @@ loc_821C69BC:
 	// cmplwi r3,0
 	ctx.cr0.compare<uint32_t>(ctx.r3.u32, 0, ctx.xer);
 	// bne 0x821c6578
-	if (!ctx.cr0.eq) goto loc_821C6578;
+	// ERROR: conditional branch to unknown address 0x821C6578
+	if (!ctx.cr0.eq) REX_FATAL("Unresolved branch from 0x821C69D8 to 0x821C6578");
 	// lwz r11,16(r30)
 	ctx.r11.u64 = REX_LOAD_U32(ctx.r30.u32 + 16);
 	// lis r10,-1
@@ -16938,13 +16943,15 @@ loc_821C6A98:
 	// cmplwi cr6,r3,0
 	ctx.cr6.compare<uint32_t>(ctx.r3.u32, 0, ctx.xer);
 	// beq cr6,0x821c6508
-	if (ctx.cr6.eq) goto loc_821C6508;
+	// ERROR: conditional branch to unknown address 0x821C6508
+	if (ctx.cr6.eq) REX_FATAL("Unresolved branch from 0x821C6A9C to 0x821C6508");
 	// lwz r11,0(r27)
 	ctx.r11.u64 = REX_LOAD_U32(ctx.r27.u32 + 0);
 	// cmplw cr6,r11,r3
 	ctx.cr6.compare<uint32_t>(ctx.r11.u32, ctx.r3.u32, ctx.xer);
 	// beq cr6,0x821c6508
-	if (ctx.cr6.eq) goto loc_821C6508;
+	// ERROR: conditional branch to unknown address 0x821C6508
+	if (ctx.cr6.eq) REX_FATAL("Unresolved branch from 0x821C6AA8 to 0x821C6508");
 	// lwz r11,0(r3)
 	ctx.r11.u64 = REX_LOAD_U32(ctx.r3.u32 + 0);
 	// lwz r11,8(r11)
@@ -33701,7 +33708,10 @@ DEFINE_REX_FUNC(sub_8235BC90) {
 	// cmplwi cr6,r11,36
 	ctx.cr6.compare<uint32_t>(ctx.r11.u32, 36, ctx.xer);
 	// bgt cr6,0x8235bce4
-	if (ctx.cr6.gt) goto loc_8235BCE4;
+	if (ctx.cr6.gt) {
+		sub_8235BCE4(ctx, base);
+		return;
+	}
 	// lis r12,-32248
 	ctx.r12.s64 = -2113404928;
 	// addi r12,r12,-24232
@@ -33721,107 +33731,119 @@ DEFINE_REX_FUNC(sub_8235BC90) {
 	// bctr 
 	switch (ctx.r11.u32) {
 	case 0:
-		goto loc_8235BCDC;
+		sub_8235BCDC(ctx, base);
+		return;
 	case 1:
-		goto loc_8235BCC4;
+		sub_8235BCC4(ctx, base);
+		return;
 	case 2:
-		goto loc_8235BCCC;
+		sub_8235BCCC(ctx, base);
+		return;
 	case 3:
-		goto loc_8235BCCC;
+		sub_8235BCCC(ctx, base);
+		return;
 	case 4:
-		goto loc_8235BCC4;
+		sub_8235BCC4(ctx, base);
+		return;
 	case 5:
-		goto loc_8235BCC4;
+		sub_8235BCC4(ctx, base);
+		return;
 	case 6:
-		goto loc_8235BCDC;
+		sub_8235BCDC(ctx, base);
+		return;
 	case 7:
-		goto loc_8235BCDC;
+		sub_8235BCDC(ctx, base);
+		return;
 	case 8:
-		goto loc_8235BCD4;
+		sub_8235BCD4(ctx, base);
+		return;
 	case 9:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 10:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 11:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 12:
-		goto loc_8235BCC4;
+		sub_8235BCC4(ctx, base);
+		return;
 	case 13:
-		goto loc_8235BCC4;
+		sub_8235BCC4(ctx, base);
+		return;
 	case 14:
-		goto loc_8235BCCC;
+		sub_8235BCCC(ctx, base);
+		return;
 	case 15:
-		goto loc_8235BCCC;
+		sub_8235BCCC(ctx, base);
+		return;
 	case 16:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 17:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 18:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 19:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 20:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 21:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 22:
-		goto loc_8235BCDC;
+		sub_8235BCDC(ctx, base);
+		return;
 	case 23:
-		goto loc_8235BCD4;
+		sub_8235BCD4(ctx, base);
+		return;
 	case 24:
-		goto loc_8235BCC4;
+		sub_8235BCC4(ctx, base);
+		return;
 	case 25:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 26:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 27:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 28:
-		goto loc_8235BCDC;
+		sub_8235BCDC(ctx, base);
+		return;
 	case 29:
-		goto loc_8235BCD4;
+		sub_8235BCD4(ctx, base);
+		return;
 	case 30:
-		goto loc_8235BCC4;
+		sub_8235BCC4(ctx, base);
+		return;
 	case 31:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 32:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 33:
-		goto loc_8235BCE4;
+		sub_8235BCE4(ctx, base);
+		return;
 	case 34:
-		goto loc_8235BCDC;
+		sub_8235BCDC(ctx, base);
+		return;
 	case 35:
-		goto loc_8235BCD4;
+		sub_8235BCD4(ctx, base);
+		return;
 	case 36:
-		goto loc_8235BCC4;
+		sub_8235BCC4(ctx, base);
+		return;
 	default:
 		__builtin_trap(); // Switch case out of range
 	}
-loc_8235BCC4:
-	// li r3,4
-	ctx.r3.s64 = 4;
-	// blr 
-	return;
-loc_8235BCCC:
-	// li r3,3
-	ctx.r3.s64 = 3;
-	// blr 
-	return;
-loc_8235BCD4:
-	// li r3,2
-	ctx.r3.s64 = 2;
-	// blr 
-	return;
-loc_8235BCDC:
-	// li r3,1
-	ctx.r3.s64 = 1;
-	// blr 
-	return;
-loc_8235BCE4:
-	// li r3,0
-	ctx.r3.s64 = 0;
-	// blr 
-	return;
 }
 
 DEFINE_REX_FUNC(sub_8235C208) {

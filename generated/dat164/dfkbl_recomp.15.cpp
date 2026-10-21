@@ -37832,6 +37832,12 @@ loc_8821CD7C:
 	return;
 }
 
+DEFINE_REX_FUNC(sub_8821CEDC) {
+	REX_FUNC_PROLOGUE();
+	// blr 
+	return;
+}
+
 DEFINE_REX_FUNC(sub_8821D5D0) {
 	REX_FUNC_PROLOGUE();
 	// lis r10,-30459
