@@ -552,3 +552,50 @@ Runtime/iteration log for unresolved addresses, missing symbols, and runtime exc
   `0x00000000` for all 19 replay opens). Rebuilt with the committed
   change; `keybind_start = "1"` local `dfkbl.toml` change deliberately
   left uncommitted.
+
+## Iteration 35 (2026-10-21)
+
+- **Port futari's static crash-prevention methodology; shell hint set
+  completed; one allow-listed trap class turned out to be live** (first
+  playtest after the port).
+- Ported from beebs1998-repo/rexglue-futari (its TRACKING iterations 3-8
+  analogue) in four commits: `609d4b7` (XenonRecomp provisioned as a
+  pinned git submodule @ `ddd128b` + `scripts/bootstrap_xenon.ps1`,
+  retired futari's manual-clone there too), `1659737`
+  (`scripts/build_module_hints.ps1` + `scripts/validate_codegen.ps1`,
+  hooked into `codegen_all.ps1` and the CI workflow),
+  `c891a48` (the hint sets + regenerated tree), `901c2a5` (docs).
+- Derivation numbers (XenonRecomp reference map minus ReXGlue's
+  registered set, gap-fill stubs filtered):
+  default 8770 -> 9083 registered (315 hints), dat15 5798 -> 5819
+  (21), dat164 5798 -> 5821 (21 + 2 stragglers exposed by seeding),
+  dat165 5931 -> 5953 (22). Zero stubs, zero module unresolved-b
+  residue. The manifest lists every hint TOML FIRST; the curated
+  entrypoint lists stay authoritative (last-wins).
+- Embedded-trap gate baseline: 145 twin-block sites triaged into
+  `scripts/trap_allowlist.txt` (shell clusters `0x820A0C78`,
+  `0x820A45xx/4B5x/4D3x`, `0x820D9xxx`, `0x820DB0xx`, `0x821C6xxx/xxx`,
+  `0x821CBxxx`, `0x8235BDxx/BFxx`) + 499 informational switch-traps.
+- **Crash on first playtest**: `[FATAL] Unresolved branch from
+  0x820A4750 to 0x820A4554` fired verbatim at runtime — the lesson:
+  allow-listed does not mean unreachable. `0x820A4554` is a mid-block
+  boundary that neither the analyzer nor XenonRecomp ever scan as a
+  function start (it falls between `sub_820A44E0` and `sub_820A4578`),
+  so the derivation pass could not see it.
+- Fix (`d02cd86`): a bare `[functions."0x820A4554"]` entry in
+  `dfkbl_functions.toml` — same resolution futari used for
+  0x820E6728/0x820E6734/0x820E673C — plus a SDK bump `9019af7` ->
+  `348c804` (futari's validated main tip: the `fix(codegen)` that
+  classifies branch targets against the emitting function node first).
+  With both in place the whole family renders as folded `bne`
+  comments, and 20 of the 145 allow-listed sites resolved; the
+  baseline is now 125 sites (stale entries removed, gate green).
+- Rule going forward: before allow-listing a new trap cluster ask
+  what happens if a branch into the twin block is live — a stable
+  answer needs the boundary registered (or the block-override /
+  parent-chunk SDK feature futari sketched for `0x82081778`).
+- **Status**: VERIFIED by user (2026-10-21) - all three game modes
+  (Black Label / Novice / Arrange) load and play, no FATAL, no
+  unresolved-branch residues in the logs (only the known rate-limited
+  resolve-spam lines). Both repos pushed: futari `6227f74`, dfkbl
+  through `d02cd86`.
