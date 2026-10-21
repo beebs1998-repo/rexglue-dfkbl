@@ -682,3 +682,31 @@ Runtime/iteration log for unresolved addresses, missing symbols, and runtime exc
   unresolved-branch residues in the logs (only the known rate-limited
   resolve-spam lines). Both repos pushed: futari `6227f74`, dfkbl
   through `d02cd86`.
+
+## Iteration 36 (2026-10-22) — config-file staging backported from the mushi
+## port (`eba3a09`)
+
+- Symptom (pre-existing here): `SetupEnvironment` points the live config at
+  `exe_dir/dfkbl.toml`, and a MISSING file is benign-but-degrading — the
+  first launch silently ran on compiled-in defaults (no keybinds/mnk, no
+  log rotation, no pins). The committed template was already curated
+  (d3d12 slowdown pin + rotating `logs/dfkbl.log`), but nothing ever
+  copied it to the exe dir, so it only helped people who manually copied
+  it. This is exactly the drift mushi's port eliminated by construction.
+- Fix (split from the mushi port's convention, unchanged semantics): the
+  template is staged next to the exe copy-if-missing from three entry
+  points — POST_BUILD (`scripts/stage_config.cmake`), `launch.bat`, and
+  the CI artifact. A live (F4-saved) config is NEVER overwritten, so
+  edits survive every build. Committed in `eba3a09` (TRACKING entry
+  deferred pending this file's in-flight 32-34 backfill: the backport
+  commit deliberately avoided sweeping unrelated dirty edits into the
+  staging commit).
+- Template edit: header comment extended with the staging semantics
+  (copy-if-missing, no propagation after first stage). No cvar lines
+  changed.
+- Caution: the POST_BUILD copy triggers for every build and only writes
+  when the live file is absent. NOTE for this machine: the existing live
+  exe-dir config predates the fix and had drifted (auto-generated header,
+  no pins) — per the convention it is NOT auto-fixed by the staging rule;
+  delete `out\build\win-amd64-release\dfkbl.toml` (or re-edit via F4) to
+  re-sync from the template once, after which it persists.
