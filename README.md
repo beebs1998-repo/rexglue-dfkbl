@@ -134,6 +134,14 @@ requires the game files **and** the `rexglue` CLI (built with the SDK).
 .\scripts\codegen_all.ps1
 ```
 
+The script ends with the embedded-trap gate (`scripts/validate_codegen.ps1`):
+a codegen turn that emits a new recompiler-trap site fails there instead of
+as a runtime crash (see `scripts/trap_allowlist.txt` for the triaged
+baseline). A one-time per-machine build of the XenonRecomp submodule
+(`pwsh .\scripts\bootstrap_xenon.ps1`) is also needed only for
+`scripts/build_module_hints.ps1` — the static missing-function derivation that
+seeds the `dfkbl*_hints.toml` files.
+
 Then rebuild. Two things to know:
 
 - The three modules share guest base `0x88000000`, so codegen refuses to process
@@ -146,6 +154,12 @@ Then rebuild. Two things to know:
 
 ## Known issues
 
+- **Shell twin-block residue (triaged, inert-looking)** — 145 embedded-trap
+  sites in `generated/default/` are allow-listed in `scripts/trap_allowlist.txt`
+  (see AGENTS.md "Embedded-trap gate"). They sit in jump-table-torn code; the
+  hint pass that made the rest of the shell statically complete surfaced them.
+  A playtest of all three game modes is the standing confirmation that the
+  class is inactive at runtime.
 - **GPU resolve spam** — DFKBL issues resolve ops the Xenos backend can't execute
   (resolves to 1-bit `k_1_REVERSE`, and resolve vertex layouts that aren't
   `kVertex`/size 6). They are dropped gracefully; some resolve-to-texture effects

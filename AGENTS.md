@@ -39,6 +39,7 @@ Two facts dominate everything else:
 | `dfkbl_manifest.toml` | Codegen manifest (entrypoint + 3 modules) |
 | `dfkbl_functions.toml` | Dynamic entrypoints for the entrypoint XEX |
 | `dfkbl_dat15_functions.toml`, `dfkbl_dat164_functions.toml`, `dfkbl_dat165_functions.toml` | Dynamic entrypoints per module |
+| `dfkbl_hints.toml`, `dfkbl_dat15/164/165_hints.toml` | Generated function-entry hints (see "Static function-hint derivation"); listed FIRST in the manifest |
 | `dfkbl.toml` | Runtime settings (auto-written by the app; also live-editable via F4) |
 | `TRACKING.md` | Iteration log — read before changing runtime/GPU behaviour |
 | `game_data/`, `user_data/`, `logs/`, `out/` | Local only, gitignored |
@@ -73,11 +74,62 @@ committed versions with `git checkout --`. If you regenerate by hand, do the sam
 Workflow when the game hits an unregistered function
 (`[FATAL] Call to invalid or unregistered function at guest address 0x...`):
 
-1. Add the address to the right `dfkbl*_functions.toml` (entrypoint vs the module
-   that logged it).
-2. `.\scripts\codegen_all.ps1`
-3. Rebuild.
-4. Record the iteration in `TRACKING.md`.
+That workflow is now obsolete for the common case — the crash class is
+prevented statically (next section). Only fall back to the manual steps
+(address-adding + regenerate + rebuild + iteration note) for something the
+derivation pass could not see (address outside the XenonRecomp map).
+
+## Static function-hint derivation (`scripts/build_module_hints.ps1`)
+
+The analyzer misses functions that are only reached by indirect calls (no
+PDATA/static edge), and each used to be found by playtesting until a
+`[FATAL] Call to invalid or unregistered function` fired. The derivation pass
+finds them all statically instead, per target:
+
+1. Run XenonRecomp (git submodule `thirdparty/XenonRecomp`, fork
+   `beebs1998-repo/XenonRecomp` pinned to upstream `ddd128b`; build once per
+   machine with `pwsh .\scripts\bootstrap_xenon.ps1`) on the image for a
+   full-coverage reference function map (PDATA + bl-scan + gap-fill).
+2. Diff that map against ReXGlue's registered set (a clean codegen run with
+   the target's TOML includes emptied — the entrypoint always keeps
+   `dfkbl_functions.toml`, whose dynamic entrypoints are invisible to static
+   analysis and required by CLI validation). `-Quick` reads the committed
+   `dfkbl_init.cpp` instead.
+3. Bulk-seed the diff into `dfkbl*_hints.toml`; codegen; drop candidates that
+   logged stubs (data/gap-fill misidentifications); write the final hints
+   file (`dfkbl_hints.toml` for the shell, `dfkbl_dat15/164/165_hints.toml`
+   for the modules).
+
+Notes learned by painful debugging (kept from the futari port):
+
+- The CLI resolves every path relative to the manifest itself. Temp manifests
+  (`.hints_tmp.toml`) must live at the repo root, and they are removed by the
+  script.
+- XenonRecomp nested submodules (fmt/tomlplusplus/xxHash) appear as
+  existing-but-empty dirs when not initialized; `bootstrap_xenon.ps1` handles
+  them (verify with `git -C thirdparty/XenonRecomp submodule status` — no '-'
+  prefixes).
+- One codegen target per run (overlap check: all modules share 0x88000000).
+
+## Embedded-trap gate (`scripts/validate_codegen.ps1`)
+
+Scans `generated/` for recompiler failure modes emitted as embedded traps
+(`REX_FATAL("Unresolved call/branch ...")`, unregistered jumps, `// STUB:`),
+plus the SDK's switch-case out-of-range `__builtin_trap()` sites
+(informational only — still emitted by the current SDK; porting the switch
+fallback would remove them). Running after every codegen turn (`codegen_all.ps1`)
+and in CI before Configure, it fails loudly on a new site identity with
+file:line + guest addresses, instead of during playtesting.
+
+Triaged baseline: **145 sites, all in the shell twin-block clusters**
+(`0x820A0Cxx`, `0x820D9xxx`, `0x820DB0xx`, `0x821C6xxx`, `0x821CBxxx`,
+`0x8235BDxx`) — functions whose interior branches point into
+not-quite-registered twin blocks; the same class futari documented. Allow-list
+identities are `<target> <class> <guest addresses>` in
+`scripts/trap_allowlist.txt`; a new site not listed there fails the gate (fix
+it via hints/overrides, or triage it into the file deliberately). Cleaning up
+this residue means block overrides or the parent/chunk SDK port — see futari's
+`0x82081778` chunk fix for the shape.
 
 ## Conventions
 
