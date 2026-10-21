@@ -3,7 +3,8 @@ setlocal
 title DFKBL Recomp
 
 set "ROOT=%~dp0"
-set "EXE=%ROOT%out\build\win-amd64-release\dfkbl.exe"
+set "EXEDIR=%ROOT%out\build\win-amd64-release"
+set "EXE=%EXEDIR%\dfkbl.exe"
 
 if not exist "%EXE%" (
   echo.
@@ -16,6 +17,14 @@ if not exist "%EXE%" (
   echo.
   pause
   exit /b 1
+)
+
+rem Stage the settings template next to the exe (exe_dir = the live config
+rem the game reads and writes). Copy-if-missing: never overwrite a locally
+rem edited / F4-saved live file. The build also does this via POST_BUILD.
+if not exist "%EXEDIR%\dfkbl.toml" (
+  copy /Y "%ROOT%dfkbl.toml" "%EXEDIR%\dfkbl.toml" >nul
+  echo Staged dfkbl.toml into %EXEDIR%
 )
 
 if not exist "%ROOT%game_data\default.xex" (

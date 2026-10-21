@@ -1,4 +1,12 @@
 ﻿# dfkbl.toml - settings template (the game writes/reads dfkbl.toml next to the exe).
+#
+# The live copy lives next to dfkbl.exe (out/build/win-amd64-release/dfkbl.toml,
+# or wherever the exe and DLLs are) and is staged from this template on the
+# first build/launch (scripts/stage_config.cmake + launch.bat),
+# copy-if-missing: the live file is never overwritten by a build, so F4
+# saves and local edits survive. Editing this template after first stage
+# does NOT propagate - delete the live copy or re-edit via F4 to re-sync.
+# (Backported from the mushi port's config-staging convention.)
 # Saves are diff-only: default-equal cvars are omitted. d3d12_submit_on_primary_buffer_end
 # = false is the validated slowdown fix and the SDK default, so its line missing from a
 # written file means the fix is active. The explicit line below pins it for stale-SDK safety.

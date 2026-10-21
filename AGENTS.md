@@ -30,6 +30,23 @@ Two facts dominate everything else:
    (pacing/present cvars, log rate-limiters) lives on the `legacy` branch.
    Building against a different SDK can change/crash behaviour.
 
+## Config-file staging (backported from the mushi port)
+
+`SetupEnvironment` sets the live config to `exe_dir/dfkbl.toml`, and a
+missing file is benign-but-degrading (game silently runs on compiled-in
+defaults: no keybinds/mnk, no log rotation, no pinned cvars). Historically
+this project's curated template therefore never took effect on first
+launch. It is now staged by construction, three entry points, ALL
+copy-if-missing — the live file is never overwritten:
+
+- POST_BUILD stages `dfkbl.toml` next to the exe if missing
+  (`scripts/stage_config.cmake`).
+- `launch.bat` applies the same rule.
+- CI ships `dfkbl.toml` inside the build artifact.
+
+If the template changes after first stage, delete the live copy or re-edit
+via F4 to re-sync (documented in README "Settings").
+
 ## Layout
 
 | Path | Notes |

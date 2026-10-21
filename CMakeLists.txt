@@ -58,3 +58,17 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/metadata/icons")
         PREFIX "icons")
 endif()
 rexglue_configure_target(dfkbl GPU_PLUGINS xenos)
+
+# Stage the settings template next to the executable: exe_dir/dfkbl.toml is
+# the live config the game reads/writes, and a missing file means the game
+# runs on compiled-in defaults (no keybinds/mnk, no log rotation, no pinned
+# cvars). Copy-if-missing only - the live file is never overwritten (F4 saves
+# and local edits survive every build). launch.bat applies the same rule.
+# (Backported from the mushi port's config-staging convention.)
+add_custom_command(TARGET dfkbl POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+        -DTEMPLATE=${CMAKE_CURRENT_SOURCE_DIR}/dfkbl.toml
+        -DDIR=$<TARGET_FILE_DIR:dfkbl>
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/scripts/stage_config.cmake
+    COMMENT "Staging dfkbl.toml (if missing)"
+    VERBATIM)

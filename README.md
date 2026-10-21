@@ -99,10 +99,15 @@ The game writes logs to `logs/` and saves to `user_data/`.
 
 ## Settings
 
-The game reads and writes `dfkbl.toml` **next to the executable** (the copy in
-this repository is a template; run from `out\build\win-amd64-release` and the
-live file is written there). Settings can be changed live from the in-game
-overlay (press **F4**, then *Save to config*).
+The game reads and writes `dfkbl.toml` **next to the executable**. The copy
+in this repository is a *template*: the build (POST_BUILD) and `launch.bat`
+stage it next to the exe **only if the live file does not already exist**
+(copy-if-missing; backported from the mushi port), so the curated defaults
+are in effect from the very first launch, and F4 saves / manual edits are
+never clobbered by a rebuild. Editing the repo template after first stage
+does NOT propagate — delete the live copy (or re-edit via F4) to re-sync.
+Settings can be changed live from the in-game overlay (press **F4**, then
+*Save to config*).
 
 Saving is **diff-only**: only cvars whose current value differs from the
 compiled-in SDK default are written. A cvar sitting at its default therefore
