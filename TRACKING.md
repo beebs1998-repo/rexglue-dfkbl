@@ -553,6 +553,89 @@ Runtime/iteration log for unresolved addresses, missing symbols, and runtime exc
   change; `keybind_start = "1"` local `dfkbl.toml` change deliberately
   left uncommitted.
 
+## Iteration 32 (2026-10-20)
+
+- **Add F11 fullscreen-toggle hotkey** (feature request).
+- Symptom: no in-app way to switch windowed/fullscreen; the `fullscreen`
+  cvar (`UI/Window`) was only settable at launch or via F4 settings edit.
+- Root cause: no keybind existed for it; the SDK already had all the
+  pieces (keybind registry in `rex/ui/keybinds.cpp`, `F11` in the key
+  name table, and the `ReXApp::SetupPresentation` change callback that
+  applies `fullscreen` changes to the window).
+- Fix (app-side, `src/dfkbl_app.h`, no SDK change): `OnPostSetup` now
+  registers the bind `bind_fullscreen = "F11"` ("Toggle fullscreen");
+  the callback flips the cvar via
+  `rex::cvar::SetFlagByName("fullscreen", …)` (runtime source), which
+  goes through the cvar setter, fires the registered change callback
+  (`window_->SetFullscreen`), and serializes into `dfkbl.toml` on save.
+  `OnShutdown` overrides the previously commented hook to
+  `UnregisterBind("bind_fullscreen")`, mirroring the SDK's own bind
+  teardown order (app hook fires first in `ReXApp::OnDestroy`).
+  Added include `rex/ui/keybinds.h`. No codegen needed (host-app code
+  only). Bind is remappable via its `bind_fullscreen` cvar and appears
+  under `Input/Keybinds/System` in the F4 UI like the other system
+  binds; only persisted to `dfkbl.toml` if rebound from `F11`.
+- **Status**: VERIFIED by user (2026-10-20) - F11 toggles
+  windowed/borderless-fullscreen in-game.
+
+## Iteration 33 (2026-10-20)
+
+- **F11 fullscreen toggle works but the state is not persisted** (user
+  playtest of iter-32: toml said `fullscreen = false`, F11 toggled to
+  fullscreen, Alt-F4 exit, relaunch started windowed with stale value).
+- Root cause: not a keybind problem - the SDK has **no save-on-exit**
+  for cvars at all. `rex::cvar::SaveConfig` is only invoked from the F4
+  settings overlay's "Save to config" button
+  (`src/ui/overlay/settings_overlay.cpp:506`); `ReXApp::OnDestroy`
+  never serializes the registry, so runtime-set values (F11 toggle,
+  settings edits done without clicking Save) die with the process.
+  The iter-32 claim of "persists on auto-save" was wrong - there is
+  no auto-save.
+- Fix (app-side, `src/dfkbl_app.h`): override `OnConfigurePaths` to
+  capture `paths.config_path` (`exe_dir / "dfkbl.toml"`, set by
+  `SetupEnvironment` before `LoadConfig`) into a member, and in
+  `OnShutdown` call `rex::cvar::SaveConfig(config_path_)` (guarded on
+  a non-empty path). `OnShutdown` fires first inside
+  `ReXApp::OnDestroy`, before any cvar teardown. `SaveConfig` is a
+  no-op ("no modified flags to save") when nothing differs from
+  defaults, so it is safe to call unconditionally.
+- Persistence semantics are still correct with the
+  omit-if-equals-default serializer: `fullscreen`'s cvar default
+  is `true`, so toggling to fullscreen drops the `fullscreen` line from
+  the file and next launch inherits the default (fullscreen); toggling
+  back to windowed writes `fullscreen = false` explicitly. Either way
+  relaunch matches the last toggled state.
+- **Status**: SHADOWED by iter-34 (the `OnShutdown` save never fires on
+  the Alt-F4 path; see iter-34 for the verified fix).
+
+## Iteration 34 (2026-10-20)
+
+- **Still not persisted after iter-33** (user: `launch.bat`, F11 on title
+  screen, Alt-F4, toml unchanged).
+- Root cause: the close path never reaches the app's teardown. Window
+  close (`Alt-F4`/X) flows: `SendCloseRequestToListeners` ->
+  `OnCloseRequested` -> `OnWindowCloseRequested` (overridable hook,
+  default `return true`) -> platform close -> `OnBeforeClose` ->
+  `OnClosing` -> and `ReXApp::OnClosing` terminates the title
+  (`TerminateTitle`) then deliberately **hard-exits the process**
+  (`rex::FlushLogging(); std::_Exit(0)`) to avoid deadlocking on a host
+  lock a straggler TerminateTitle may still hold
+  (`src/ui/rex_app.cpp:498-512`). `OnDestroy`/`OnShutdown` therefore
+  only run on non-close teardown paths; the iter-33 shutdown save never
+  fired in the user's flow.
+- Fix: override `OnWindowCloseRequested()` in `DfkblApp` and call
+  `rex::cvar::SaveConfig(config_path_)` there before returning `true`;
+  it runs on the window-close path just before the hard-exit. Kept the
+  iter-33 `OnShutdown` save for complete teardowns. `OnConfigurePaths`
+  capture of `config_path_` unchanged.
+- Semantics unchanged from iter-33: omit-if-equals-default means
+  leaving the app fullscreen drops the `fullscreen = false` line and
+  relaunch starts fullscreen (cvar default `true`); windowed exits
+  write `fullscreen = false` explicitly.
+- **Status**: VERIFIED by user (2026-10-20) - Close-path persistence
+  confirmed: `launch.bat` windowed -> F11 -> Alt-F4 -> relaunch starts
+  fullscreen.
+
 ## Iteration 35 (2026-10-21)
 
 - **Port futari's static crash-prevention methodology; shell hint set
