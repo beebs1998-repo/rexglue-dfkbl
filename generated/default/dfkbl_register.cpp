@@ -839,6 +839,7 @@ void dfkbl_RegisterFunctions(rex::runtime::IModuleRegistrar* registrar) {
   registrar->SetFunction(0x820A43A0, sub_820A43A0);
   registrar->SetFunction(0x820A4458, sub_820A4458);
   registrar->SetFunction(0x820A44E0, sub_820A44E0);
+  registrar->SetFunction(0x820A4554, sub_820A4554);
   registrar->SetFunction(0x820A4578, sub_820A4578);
   registrar->SetFunction(0x820A46F4, sub_820A46F4);
   registrar->SetFunction(0x820A46FC, sub_820A46FC);

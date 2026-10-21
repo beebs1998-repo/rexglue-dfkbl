@@ -154,12 +154,14 @@ Then rebuild. Two things to know:
 
 ## Known issues
 
-- **Shell twin-block residue (triaged, inert-looking)** — 145 embedded-trap
+- **Shell twin-block residue (triaged, inert-looking)** — 125 embedded-trap
   sites in `generated/default/` are allow-listed in `scripts/trap_allowlist.txt`
   (see AGENTS.md "Embedded-trap gate"). They sit in jump-table-torn code; the
-  hint pass that made the rest of the shell statically complete surfaced them.
-  A playtest of all three game modes is the standing confirmation that the
-  class is inactive at runtime.
+  hint pass that made the rest of the shell statically complete surfaced them,
+  and the SDK's branch-classification fix (`348c804`) plus one live boundary
+  registration (`0x820A4554`, hit by the first playtest) resolved 20 of the
+  original 145. A playtest of all three game modes is the standing
+  confirmation that the class is inactive at runtime.
 - **GPU resolve spam** — DFKBL issues resolve ops the Xenos backend can't execute
   (resolves to 1-bit `k_1_REVERSE`, and resolve vertex layouts that aren't
   `kVertex`/size 6). They are dropped gracefully; some resolve-to-texture effects

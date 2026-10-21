@@ -1,5 +1,12 @@
 # Dynamic entrypoints for the dfkbl entrypoint XEX (from ep.txt).
 
+# Mid-block boundary the analyzer and XenonRecomp never detect as a function
+# start (out of both scans), but the runtime jumps there on a live path
+# (b 0x820A4750 -> 0x820A4554 fired "[FATAL] Unresolved branch ..." after the
+# 379-entry hint pass; sits between sub_820A44E0 and sub_820A4578). Same
+# resolution futari used for 0x820E6728/0x820E6734/0x820E673C.
+[functions."0x820A4554"]
+
 [functions."0x820968D0"]
 name = "sub_820968D0"
 

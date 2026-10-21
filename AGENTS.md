@@ -16,16 +16,19 @@ Two facts dominate everything else:
    project builds without the game. Do not hand-edit generated files; regenerate
    them instead (`scripts/codegen_all.ps1`).
 2. **The SDK is a pinned submodule with local patches.** `thirdparty/rexglue-sdk`
-   points at `beebs1998-repo/rexglue-sdk` @ `9019af7407c3a8c272e095fc5a02ee348d077a33`
-   (`main` tip; branch refs were rewritten 2026-10-19 to scrub placeholder commit
-   identities — pre-scrub equivalent: `08c9774...`; `a1b93af5...` on
+   points at `beebs1998-repo/rexglue-sdk` @ `348c804...` (`main` tip; bumped from
+   `9019af7` when the first playtest with the new hint set proved a live
+   cross-function branch trap — `348c804` is futari's validated tip:
+   `9019af7` + `profile_name` cvar + the branch-target classification fix).
+   Branch refs were rewritten 2026-10-19 to scrub placeholder commit
+   identities (pre-scrub equivalent: `08c9774...`; `a1b93af5...` on
    `fix/cvar-toml-serialization` is now `b773a88...`)
    (pristine mainline: `v0.10.0` + 5 commits — SSSE3 build flag, module-filename
    match fix, NT device-prefix strip fix, `d3d12_submit_on_primary_buffer_end=false`
-   default, cvar TOML save-serialization fix). Config cvars are the pristine
-   v0.10.0 set; the experiments line (pacing/present cvars, log rate-limiters)
-   lives on the `legacy` branch. Building against a different SDK can
-   change/crash behaviour.
+   default, cvar TOML save-serialization fix, `profile_name` cvar). Config
+   cvars are otherwise the pristine v0.10.0 set; the experiments line
+   (pacing/present cvars, log rate-limiters) lives on the `legacy` branch.
+   Building against a different SDK can change/crash behaviour.
 
 ## Layout
 
@@ -121,7 +124,7 @@ fallback would remove them). Running after every codegen turn (`codegen_all.ps1`
 and in CI before Configure, it fails loudly on a new site identity with
 file:line + guest addresses, instead of during playtesting.
 
-Triaged baseline: **145 sites, all in the shell twin-block clusters**
+Triaged baseline: **125 sites, all in the shell twin-block clusters**
 (`0x820A0Cxx`, `0x820D9xxx`, `0x820DB0xx`, `0x821C6xxx`, `0x821CBxxx`,
 `0x8235BDxx`) — functions whose interior branches point into
 not-quite-registered twin blocks; the same class futari documented. Allow-list

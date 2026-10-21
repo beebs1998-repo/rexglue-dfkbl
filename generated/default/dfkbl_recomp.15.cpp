@@ -1062,8 +1062,10 @@ loc_820A4740:
 	// cmpwi cr6,r11,0
 	ctx.cr6.compare<int32_t>(ctx.r11.s32, 0, ctx.xer);
 	// bne cr6,0x820a4554
-	// ERROR: conditional branch to unknown address 0x820A4554
-	if (!ctx.cr6.eq) REX_FATAL("Unresolved branch from 0x820A4750 to 0x820A4554");
+	if (!ctx.cr6.eq) {
+		sub_820A4554(ctx, base);
+		return;
+	}
 	// blr 
 	return;
 }

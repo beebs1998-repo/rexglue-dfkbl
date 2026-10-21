@@ -2,11 +2,17 @@
 # landed here, ported from the futari repo).
 #
 # Every line below is an embedded recompiler trap present in the committed
-# generated/ tree when the gate was introduced; each mirrors the block-twin /
-# jump-table residue class documented in futari TRACKING.md iterations 3-8
-# (functions whose interior branches point into not-quite-registered twin
-# blocks). To be playtest-verified in the DFKBL iteration that adds the hint
-# set.
+# generated/ tree; each mirrors the block-twin / jump-table residue class
+# documented in futari TRACKING.md (functions whose interior branches point
+# into not-quite-registered twin blocks). To be playtest-verified in the
+# DFKBL iteration that adds the hint set.
+#
+# History: the first baseline counted 145 sites. Bumping the SDK submodule to
+# 348c804 (fix(codegen): classify branch targets against the emitting function
+# node first) plus registering the one live mid-block boundary the game
+# demanded (0x820A4554, see dfkbl_functions.toml) resolved 20 of them - the
+# 0x820A4750->0x820A4554 family went from REX_FATAL to folded bne comments.
+#
 # New sites not listed here FAIL the gate: fix them (function-hint/override)
 # or triage them into this file deliberately, with a comment.
 #
@@ -17,10 +23,10 @@ default unresolved_call 0X8235BDE8=0X8235BD40   # generated\default\dfkbl_recomp
 default unresolved_call 0X821C75B8=0X821C7570   # generated\default\dfkbl_recomp.14.cpp:14327
 default unresolved_call 0X821CB2B4=0X821CB248   # generated\default\dfkbl_recomp.16.cpp:15708
 default unresolved_call 0X8235BE48=0X8235BDC8   # generated\default\dfkbl_recomp.16.cpp:35627
-default unresolved_call 0X820DB0DC=0X820DB034   # generated\default\dfkbl_recomp.18.cpp:3409
-default unresolved_call 0X820DB150=0X820DAFD8   # generated\default\dfkbl_recomp.18.cpp:3485
-default unresolved_call 0X820DB180=0X820DB020   # generated\default\dfkbl_recomp.18.cpp:3521
-default unresolved_call 0X821CB274=0X821CB248   # generated\default\dfkbl_recomp.18.cpp:15348
+default unresolved_call 0X820DB0DC=0X820DB034   # generated\default\dfkbl_recomp.18.cpp:3687
+default unresolved_call 0X820DB150=0X820DAFD8   # generated\default\dfkbl_recomp.18.cpp:3763
+default unresolved_call 0X820DB180=0X820DB020   # generated\default\dfkbl_recomp.18.cpp:3799
+default unresolved_call 0X821CB274=0X821CB248   # generated\default\dfkbl_recomp.18.cpp:15626
 default unresolved_call 0X821C7600=0X821C75B4   # generated\default\dfkbl_recomp.19.cpp:15586
 default unresolved_call 0X8235BF90=0X8235BF14   # generated\default\dfkbl_recomp.19.cpp:33999
 default unresolved_call 0X8235BDF4=0X8235BD78   # generated\default\dfkbl_recomp.20.cpp:35686
@@ -28,32 +34,31 @@ default unresolved_call 0X8235BFB4=0X8235BF34   # generated\default\dfkbl_recomp
 default unresolved_call 0X820D9B64=0X820D9B20   # generated\default\dfkbl_recomp.23.cpp:3953
 default unresolved_call 0X821CB2A4=0X821CB248   # generated\default\dfkbl_recomp.23.cpp:14577
 default unresolved_call 0X821CB284=0X821CB1F8   # generated\default\dfkbl_recomp.25.cpp:15446
-default unresolved_call 0X8235BDC0=0X8235BD28   # generated\default\dfkbl_recomp.30.cpp:33412
-default unresolved_call 0X8235BFC4=0X8235BF64   # generated\default\dfkbl_recomp.30.cpp:33422
+default unresolved_call 0X8235BDC0=0X8235BD28   # generated\default\dfkbl_recomp.30.cpp:33414
+default unresolved_call 0X8235BFC4=0X8235BF64   # generated\default\dfkbl_recomp.30.cpp:33424
 default unresolved_call 0X8235BE20=0X8235BD28   # generated\default\dfkbl_recomp.31.cpp:35107
 default unresolved_call 0X8235BFD4=0X8235BF64   # generated\default\dfkbl_recomp.31.cpp:35117
 default unresolved_call 0X8235BE18=0X8235BD98   # generated\default\dfkbl_recomp.32.cpp:33951
 default unresolved_call 0X8235BFCC=0X8235BF34   # generated\default\dfkbl_recomp.32.cpp:33961
 default unresolved_call 0X8235BE38=0X8235BDC8   # generated\default\dfkbl_recomp.33.cpp:34821
 default unresolved_call 0X821CB294=0X821CB1F8   # generated\default\dfkbl_recomp.34.cpp:17166
-default unresolved_call 0X820D99CC=0X820D99A4   # generated\default\dfkbl_recomp.35.cpp:3476
-default unresolved_call 0X8235BF84=0X8235BEDC   # generated\default\dfkbl_recomp.35.cpp:33717
+default unresolved_call 0X820D99CC=0X820D99A4   # generated\default\dfkbl_recomp.35.cpp:3478
+default unresolved_call 0X8235BF84=0X8235BEDC   # generated\default\dfkbl_recomp.35.cpp:33719
 default unresolved_call 0X821C75F0=0X821C7570   # generated\default\dfkbl_recomp.44.cpp:15340
 default unresolved_call 0X8235BE40=0X8235BD98   # generated\default\dfkbl_recomp.44.cpp:33864
-default unresolved_call 0X8235BF5C=0X8235BEC4   # generated\default\dfkbl_recomp.45.cpp:33311
-default unresolved_call 0X821CB220=0X821CB1F8   # generated\default\dfkbl_recomp.46.cpp:15582
+default unresolved_call 0X8235BF5C=0X8235BEC4   # generated\default\dfkbl_recomp.45.cpp:33312
+default unresolved_call 0X821CB220=0X821CB1F8   # generated\default\dfkbl_recomp.46.cpp:15584
 default unresolved_call 0X8235BFBC=0X8235BEC4   # generated\default\dfkbl_recomp.47.cpp:34012
 default unresolved_call 0X8235BE30=0X8235BD9C   # generated\default\dfkbl_recomp.6.cpp:34061
-default unresolved_call 0X821C6800=0X821C6578   # generated\default\dfkbl_recomp.7.cpp:14703
-default unresolved_call 0X821C68BC=0X821C6578   # generated\default\dfkbl_recomp.7.cpp:14808
-default unresolved_call 0X821C68F4=0X821C6578   # generated\default\dfkbl_recomp.7.cpp:14843
-default unresolved_call 0X821C6A90=0X821C6710   # generated\default\dfkbl_recomp.7.cpp:15074
-default unresolved_call 0X821C6AC0=0X821C6508   # generated\default\dfkbl_recomp.7.cpp:15105
-default unresolved_call 0X821C6AC0=0X821C6508   # generated\default\dfkbl_recomp.7.cpp:15132
+default unresolved_call 0X821C6800=0X821C6578   # generated\default\dfkbl_recomp.7.cpp:14705
+default unresolved_call 0X821C68BC=0X821C6578   # generated\default\dfkbl_recomp.7.cpp:14810
+default unresolved_call 0X821C68F4=0X821C6578   # generated\default\dfkbl_recomp.7.cpp:14845
+default unresolved_call 0X821C6A90=0X821C6710   # generated\default\dfkbl_recomp.7.cpp:15076
+default unresolved_call 0X821C6AC0=0X821C6508   # generated\default\dfkbl_recomp.7.cpp:15107
+default unresolved_call 0X821C6AC0=0X821C6508   # generated\default\dfkbl_recomp.7.cpp:15134
 default unresolved_call 0X821C7630=0X821C75E8   # generated\default\dfkbl_recomp.8.cpp:14589
-default unresolved_branch 0X820A4750=0X820A4554   # generated\default\dfkbl_recomp.0.cpp:1128
-default unresolved_branch 0X820D9CE4=0X820D99B0   # generated\default\dfkbl_recomp.0.cpp:4201
-default unresolved_branch 0X820D9CF0=0X820D99B0   # generated\default\dfkbl_recomp.0.cpp:4208
+default unresolved_branch 0X820D9CE4=0X820D99B0   # generated\default\dfkbl_recomp.0.cpp:4203
+default unresolved_branch 0X820D9CF0=0X820D99B0   # generated\default\dfkbl_recomp.0.cpp:4210
 default unresolved_branch 0X821CB228=0X821CB1FC   # generated\default\dfkbl_recomp.11.cpp:14590
 default unresolved_branch 0X821CB230=0X821CB1B0   # generated\default\dfkbl_recomp.11.cpp:14595
 default unresolved_branch 0X821CB238=0X821CB1B0   # generated\default\dfkbl_recomp.11.cpp:14600
@@ -61,25 +66,21 @@ default unresolved_branch 0X821CB240=0X821CB1B0   # generated\default\dfkbl_reco
 default unresolved_branch 0X821CB248=0X821CB1FC   # generated\default\dfkbl_recomp.11.cpp:14610
 default unresolved_branch 0X820D9C00=0X820D99B0   # generated\default\dfkbl_recomp.13.cpp:3352
 default unresolved_branch 0X820D9E98=0X820D99B4   # generated\default\dfkbl_recomp.13.cpp:3411
-default unresolved_branch 0X820A4750=0X820A4554   # generated\default\dfkbl_recomp.15.cpp:1066
-default unresolved_branch 0X820D9A58=0X820D99B4   # generated\default\dfkbl_recomp.15.cpp:3394
-default unresolved_branch 0X820DB194=0X820DAFA8   # generated\default\dfkbl_recomp.15.cpp:3414
-default unresolved_branch 0X820DB1B4=0X820DAFD4   # generated\default\dfkbl_recomp.15.cpp:3432
-default unresolved_branch 0X820DB1BC=0X820DB004   # generated\default\dfkbl_recomp.15.cpp:3437
+default unresolved_branch 0X820D9A58=0X820D99B4   # generated\default\dfkbl_recomp.15.cpp:3396
+default unresolved_branch 0X820DB194=0X820DAFA8   # generated\default\dfkbl_recomp.15.cpp:3416
+default unresolved_branch 0X820DB1B4=0X820DAFD4   # generated\default\dfkbl_recomp.15.cpp:3434
+default unresolved_branch 0X820DB1BC=0X820DB004   # generated\default\dfkbl_recomp.15.cpp:3439
 default unresolved_branch 0X821CB2AC=0X821CB1B0   # generated\default\dfkbl_recomp.16.cpp:15703
-default unresolved_branch 0X820A4750=0X820A4554   # generated\default\dfkbl_recomp.17.cpp:1181
-default unresolved_branch 0X820A4750=0X820A4554   # generated\default\dfkbl_recomp.17.cpp:1394
-default unresolved_branch 0X820A4750=0X820A4554   # generated\default\dfkbl_recomp.18.cpp:973
-default unresolved_branch 0X820D98D4=0X820D9870   # generated\default\dfkbl_recomp.18.cpp:3286
-default unresolved_branch 0X820D98E8=0X820D9870   # generated\default\dfkbl_recomp.18.cpp:3297
-default unresolved_branch 0X820DB06C=0X820DAFA8   # generated\default\dfkbl_recomp.18.cpp:3338
-default unresolved_branch 0X820DB088=0X820DAFB4   # generated\default\dfkbl_recomp.18.cpp:3356
-default unresolved_branch 0X820DB0CC=0X820DAFD8   # generated\default\dfkbl_recomp.18.cpp:3399
-default unresolved_branch 0X820DB108=0X820DAFFC   # generated\default\dfkbl_recomp.18.cpp:3440
-default unresolved_branch 0X821CB254=0X821CB1FC   # generated\default\dfkbl_recomp.18.cpp:15328
-default unresolved_branch 0X821CB25C=0X821CB1B0   # generated\default\dfkbl_recomp.18.cpp:15333
-default unresolved_branch 0X821CB264=0X821CB1FC   # generated\default\dfkbl_recomp.18.cpp:15338
-default unresolved_branch 0X821CB26C=0X821CB1B0   # generated\default\dfkbl_recomp.18.cpp:15343
+default unresolved_branch 0X820D98D4=0X820D9870   # generated\default\dfkbl_recomp.18.cpp:3564
+default unresolved_branch 0X820D98E8=0X820D9870   # generated\default\dfkbl_recomp.18.cpp:3575
+default unresolved_branch 0X820DB06C=0X820DAFA8   # generated\default\dfkbl_recomp.18.cpp:3616
+default unresolved_branch 0X820DB088=0X820DAFB4   # generated\default\dfkbl_recomp.18.cpp:3634
+default unresolved_branch 0X820DB0CC=0X820DAFD8   # generated\default\dfkbl_recomp.18.cpp:3677
+default unresolved_branch 0X820DB108=0X820DAFFC   # generated\default\dfkbl_recomp.18.cpp:3718
+default unresolved_branch 0X821CB254=0X821CB1FC   # generated\default\dfkbl_recomp.18.cpp:15606
+default unresolved_branch 0X821CB25C=0X821CB1B0   # generated\default\dfkbl_recomp.18.cpp:15611
+default unresolved_branch 0X821CB264=0X821CB1FC   # generated\default\dfkbl_recomp.18.cpp:15616
+default unresolved_branch 0X821CB26C=0X821CB1B0   # generated\default\dfkbl_recomp.18.cpp:15621
 default unresolved_branch 0X820A4D34=0X820A4B5C   # generated\default\dfkbl_recomp.23.cpp:1167
 default unresolved_branch 0X820D9B74=0X820D99B0   # generated\default\dfkbl_recomp.23.cpp:3962
 default unresolved_branch 0X820D9B80=0X820D99B0   # generated\default\dfkbl_recomp.23.cpp:3969
@@ -87,17 +88,15 @@ default unresolved_branch 0X820D9DC0=0X820D99B0   # generated\default\dfkbl_reco
 default unresolved_branch 0X820D9E2C=0X820D99B4   # generated\default\dfkbl_recomp.23.cpp:4030
 default unresolved_branch 0X821CB29C=0X821CB1B0   # generated\default\dfkbl_recomp.23.cpp:14572
 default unresolved_branch 0X821CB27C=0X821CB1FC   # generated\default\dfkbl_recomp.25.cpp:15441
-default unresolved_branch 0X820A4750=0X820A4554   # generated\default\dfkbl_recomp.28.cpp:915
-default unresolved_branch 0X820D9C50=0X820D9928   # generated\default\dfkbl_recomp.28.cpp:3665
-default unresolved_branch 0X820D9C5C=0X820D99B4   # generated\default\dfkbl_recomp.28.cpp:3672
+default unresolved_branch 0X820D9C50=0X820D9928   # generated\default\dfkbl_recomp.28.cpp:3667
+default unresolved_branch 0X820D9C5C=0X820D99B4   # generated\default\dfkbl_recomp.28.cpp:3674
 default unresolved_branch 0X820A0D0C=0X820A0C78   # generated\default\dfkbl_recomp.3.cpp:774
 default unresolved_branch 0X820D9A58=0X820D99B4   # generated\default\dfkbl_recomp.3.cpp:3628
-default unresolved_branch 0X820A4750=0X820A4554   # generated\default\dfkbl_recomp.30.cpp:955
-default unresolved_branch 0X820D98D4=0X820D9870   # generated\default\dfkbl_recomp.30.cpp:2899
-default unresolved_branch 0X820D98E8=0X820D9870   # generated\default\dfkbl_recomp.30.cpp:2910
-default unresolved_branch 0X820D9EC8=0X820D9870   # generated\default\dfkbl_recomp.30.cpp:2932
-default unresolved_branch 0X820D9ED4=0X820D99B0   # generated\default\dfkbl_recomp.30.cpp:2939
-default unresolved_branch 0X820D9EE0=0X820D9870   # generated\default\dfkbl_recomp.30.cpp:2946
+default unresolved_branch 0X820D98D4=0X820D9870   # generated\default\dfkbl_recomp.30.cpp:2901
+default unresolved_branch 0X820D98E8=0X820D9870   # generated\default\dfkbl_recomp.30.cpp:2912
+default unresolved_branch 0X820D9EC8=0X820D9870   # generated\default\dfkbl_recomp.30.cpp:2934
+default unresolved_branch 0X820D9ED4=0X820D99B0   # generated\default\dfkbl_recomp.30.cpp:2941
+default unresolved_branch 0X820D9EE0=0X820D9870   # generated\default\dfkbl_recomp.30.cpp:2948
 default unresolved_branch 0X820A4D34=0X820A4B5C   # generated\default\dfkbl_recomp.32.cpp:1185
 default unresolved_branch 0X820A4D34=0X820A4B5C   # generated\default\dfkbl_recomp.33.cpp:908
 default unresolved_branch 0X820D9AD8=0X820D99B0   # generated\default\dfkbl_recomp.33.cpp:5037
@@ -106,54 +105,41 @@ default unresolved_branch 0X820D9B34=0X820D99B0   # generated\default\dfkbl_reco
 default unresolved_branch 0X820D9B40=0X820D99B0   # generated\default\dfkbl_recomp.33.cpp:5080
 default unresolved_branch 0X821CB1F8=0X821CB1B0   # generated\default\dfkbl_recomp.33.cpp:15629
 default unresolved_branch 0X821CB28C=0X821CB1FC   # generated\default\dfkbl_recomp.34.cpp:17161
-default unresolved_branch 0X820A4750=0X820A4554   # generated\default\dfkbl_recomp.35.cpp:1144
-default unresolved_branch 0X820D99C4=0X820D99B0   # generated\default\dfkbl_recomp.35.cpp:3471
-default unresolved_branch 0X820D9C50=0X820D9928   # generated\default\dfkbl_recomp.35.cpp:3510
-default unresolved_branch 0X820D9C5C=0X820D99B4   # generated\default\dfkbl_recomp.35.cpp:3517
-default unresolved_branch 0X820DB02C=0X820DB00C   # generated\default\dfkbl_recomp.35.cpp:3543
-default unresolved_branch 0X821C67AC=0X821C6578   # generated\default\dfkbl_recomp.4.cpp:16525
-default unresolved_branch 0X821C67E8=0X821C6578   # generated\default\dfkbl_recomp.4.cpp:16559
-default unresolved_branch 0X821C68B4=0X821C6710   # generated\default\dfkbl_recomp.4.cpp:16671
-default unresolved_branch 0X821C68DC=0X821C6578   # generated\default\dfkbl_recomp.4.cpp:16696
-default unresolved_branch 0X821C69D8=0X821C6578   # generated\default\dfkbl_recomp.4.cpp:16836
-default unresolved_branch 0X821C6A9C=0X821C6508   # generated\default\dfkbl_recomp.4.cpp:16947
-default unresolved_branch 0X821C6AA8=0X821C6508   # generated\default\dfkbl_recomp.4.cpp:16954
-default unresolved_branch 0X820A4D34=0X820A4B5C   # generated\default\dfkbl_recomp.43.cpp:1175
-default unresolved_branch 0X820A4D34=0X820A4B5C   # generated\default\dfkbl_recomp.43.cpp:1202
-default unresolved_branch 0X820D9AC0=0X820D99B4   # generated\default\dfkbl_recomp.43.cpp:3422
-default unresolved_branch 0X820D9E50=0X820D9D40   # generated\default\dfkbl_recomp.43.cpp:3464
-default unresolved_branch 0X820D9E5C=0X820D99B0   # generated\default\dfkbl_recomp.43.cpp:3472
-default unresolved_branch 0X820D9E64=0X820D99B0   # generated\default\dfkbl_recomp.43.cpp:3477
-default unresolved_branch 0X820A0D0C=0X820A0C78   # generated\default\dfkbl_recomp.45.cpp:746
-default unresolved_branch 0X820A4750=0X820A4554   # generated\default\dfkbl_recomp.45.cpp:908
-default unresolved_branch 0X820D9D28=0X820D99B0   # generated\default\dfkbl_recomp.45.cpp:5062
-default unresolved_branch 0X820D9D34=0X820D99B0   # generated\default\dfkbl_recomp.45.cpp:5069
-default unresolved_branch 0X820D9D3C=0X820D99B0   # generated\default\dfkbl_recomp.45.cpp:5074
-default unresolved_branch 0X820A4750=0X820A4554   # generated\default\dfkbl_recomp.46.cpp:1163
-default unresolved_branch 0X820D9B28=0X820D99B0   # generated\default\dfkbl_recomp.46.cpp:3307
-default unresolved_branch 0X820D9B34=0X820D99B0   # generated\default\dfkbl_recomp.46.cpp:3314
-default unresolved_branch 0X820D9B40=0X820D99B0   # generated\default\dfkbl_recomp.46.cpp:3321
-default unresolved_branch 0X821CB208=0X821CB1FC   # generated\default\dfkbl_recomp.46.cpp:15567
-default unresolved_branch 0X821CB210=0X821CB1B0   # generated\default\dfkbl_recomp.46.cpp:15572
-default unresolved_branch 0X821CB218=0X821CB1FC   # generated\default\dfkbl_recomp.46.cpp:15577
+default unresolved_branch 0X820D99C4=0X820D99B0   # generated\default\dfkbl_recomp.35.cpp:3473
+default unresolved_branch 0X820D9C50=0X820D9928   # generated\default\dfkbl_recomp.35.cpp:3512
+default unresolved_branch 0X820D9C5C=0X820D99B4   # generated\default\dfkbl_recomp.35.cpp:3519
+default unresolved_branch 0X820DB02C=0X820DB00C   # generated\default\dfkbl_recomp.35.cpp:3545
+default unresolved_branch 0X820A4D34=0X820A4B5C   # generated\default\dfkbl_recomp.43.cpp:1201
+default unresolved_branch 0X820D9AC0=0X820D99B4   # generated\default\dfkbl_recomp.43.cpp:3421
+default unresolved_branch 0X820D9E50=0X820D9D40   # generated\default\dfkbl_recomp.43.cpp:3463
+default unresolved_branch 0X820D9E5C=0X820D99B0   # generated\default\dfkbl_recomp.43.cpp:3471
+default unresolved_branch 0X820D9E64=0X820D99B0   # generated\default\dfkbl_recomp.43.cpp:3476
+default unresolved_branch 0X820D9D28=0X820D99B0   # generated\default\dfkbl_recomp.45.cpp:5063
+default unresolved_branch 0X820D9D34=0X820D99B0   # generated\default\dfkbl_recomp.45.cpp:5070
+default unresolved_branch 0X820D9D3C=0X820D99B0   # generated\default\dfkbl_recomp.45.cpp:5075
+default unresolved_branch 0X820D9B28=0X820D99B0   # generated\default\dfkbl_recomp.46.cpp:3309
+default unresolved_branch 0X820D9B34=0X820D99B0   # generated\default\dfkbl_recomp.46.cpp:3316
+default unresolved_branch 0X820D9B40=0X820D99B0   # generated\default\dfkbl_recomp.46.cpp:3323
+default unresolved_branch 0X821CB208=0X821CB1FC   # generated\default\dfkbl_recomp.46.cpp:15569
+default unresolved_branch 0X821CB210=0X821CB1B0   # generated\default\dfkbl_recomp.46.cpp:15574
+default unresolved_branch 0X821CB218=0X821CB1FC   # generated\default\dfkbl_recomp.46.cpp:15579
 default unresolved_branch 0X820A4D34=0X820A4B5C   # generated\default\dfkbl_recomp.48.cpp:875
 default unresolved_branch 0X820D9B74=0X820D99B0   # generated\default\dfkbl_recomp.48.cpp:3515
 default unresolved_branch 0X820D9B80=0X820D99B0   # generated\default\dfkbl_recomp.48.cpp:3522
 default unresolved_branch 0X820D9CE4=0X820D99B0   # generated\default\dfkbl_recomp.48.cpp:3587
 default unresolved_branch 0X820D9CF0=0X820D99B0   # generated\default\dfkbl_recomp.48.cpp:3594
 default unresolved_branch 0X820D9E2C=0X820D99B4   # generated\default\dfkbl_recomp.6.cpp:3589
-default unresolved_branch 0X820A4750=0X820A4554   # generated\default\dfkbl_recomp.7.cpp:1136
-default unresolved_branch 0X820D9A8C=0X820D99B4   # generated\default\dfkbl_recomp.7.cpp:3593
-default unresolved_branch 0X820D9D60=0X820D9CF4   # generated\default\dfkbl_recomp.7.cpp:3617
-default unresolved_branch 0X820D9D74=0X820D99B0   # generated\default\dfkbl_recomp.7.cpp:3629
-default unresolved_branch 0X820D9D80=0X820D99B0   # generated\default\dfkbl_recomp.7.cpp:3636
-default unresolved_branch 0X821C67AC=0X821C6578   # generated\default\dfkbl_recomp.7.cpp:14655
-default unresolved_branch 0X821C67E8=0X821C6578   # generated\default\dfkbl_recomp.7.cpp:14689
-default unresolved_branch 0X821C68B4=0X821C6710   # generated\default\dfkbl_recomp.7.cpp:14803
-default unresolved_branch 0X821C68DC=0X821C6578   # generated\default\dfkbl_recomp.7.cpp:14829
-default unresolved_branch 0X821C69D8=0X821C6578   # generated\default\dfkbl_recomp.7.cpp:14971
-default unresolved_branch 0X821C6A9C=0X821C6508   # generated\default\dfkbl_recomp.7.cpp:15084
-default unresolved_branch 0X821C6AA8=0X821C6508   # generated\default\dfkbl_recomp.7.cpp:15091
-default unresolved_branch 0X821C6A9C=0X821C6508   # generated\default\dfkbl_recomp.7.cpp:15111
-default unresolved_branch 0X821C6AA8=0X821C6508   # generated\default\dfkbl_recomp.7.cpp:15118
+default unresolved_branch 0X820D9A8C=0X820D99B4   # generated\default\dfkbl_recomp.7.cpp:3595
+default unresolved_branch 0X820D9D60=0X820D9CF4   # generated\default\dfkbl_recomp.7.cpp:3619
+default unresolved_branch 0X820D9D74=0X820D99B0   # generated\default\dfkbl_recomp.7.cpp:3631
+default unresolved_branch 0X820D9D80=0X820D99B0   # generated\default\dfkbl_recomp.7.cpp:3638
+default unresolved_branch 0X821C67AC=0X821C6578   # generated\default\dfkbl_recomp.7.cpp:14657
+default unresolved_branch 0X821C67E8=0X821C6578   # generated\default\dfkbl_recomp.7.cpp:14691
+default unresolved_branch 0X821C68B4=0X821C6710   # generated\default\dfkbl_recomp.7.cpp:14805
+default unresolved_branch 0X821C68DC=0X821C6578   # generated\default\dfkbl_recomp.7.cpp:14831
+default unresolved_branch 0X821C69D8=0X821C6578   # generated\default\dfkbl_recomp.7.cpp:14973
+default unresolved_branch 0X821C6A9C=0X821C6508   # generated\default\dfkbl_recomp.7.cpp:15086
+default unresolved_branch 0X821C6AA8=0X821C6508   # generated\default\dfkbl_recomp.7.cpp:15093
+default unresolved_branch 0X821C6A9C=0X821C6508   # generated\default\dfkbl_recomp.7.cpp:15113
+default unresolved_branch 0X821C6AA8=0X821C6508   # generated\default\dfkbl_recomp.7.cpp:15120
 default unresolved_branch 0X821C761C=0X821C75E8   # generated\default\dfkbl_recomp.8.cpp:14578
