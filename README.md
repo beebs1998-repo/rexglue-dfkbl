@@ -43,7 +43,7 @@ menu; all three share guest base `0x88000000`.
 | --- | --- |
 | `src/` | Host application (`main.cpp`, `dfkbl_app.h`) |
 | `generated/default/` | Recompiled entrypoint + `dll_targets.cmake` / `module_registry.cpp` |
-| `generated/dat15|dat164|dat165/` | Recompiled game-mode modules |
+| `generated/dat15,dat164,dat165/` | Recompiled game-mode modules |
 | `generated/rexglue.cmake` | SDK/CMake glue (codegen auto-generation disabled — see below) |
 | `dfkbl_manifest.toml` | Codegen manifest (entrypoint + 3 modules) |
 | `dfkbl*_functions.toml` | Extra dynamic entrypoints registered per target |
